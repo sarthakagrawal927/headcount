@@ -88,7 +88,27 @@ its evidence anyway, and asked to apply it. A human approved. **The server
 refused it regardless.** Approval covers whether a change is wanted; it does not
 establish that the change was ever measured.
 
-**3. Coherence rules.** Domain invariants a JSON schema cannot express — a
+**3. An adversarial panel.** Before a proposal reaches a human at all, three
+critics try to *refute* it — each from a distinct lens: does the patch do
+anything the rationale does not admit, does it degrade something that already
+worked, is it structurally novel or an autoincrement wearing a new name. They
+are read-only by construction (`enableTools` lists the four read-only tools
+literally, verified against the harness before the panel will convene) and fail
+closed: an unparseable verdict counts as a refutation. A majority blocks the
+proposal from ever being shown.
+
+On the patch that zeroed the player's income while claiming to add a
+supervisor, all three refuted it and two named the hidden effect outright. The
+panel's value is clearest on a proposal whose changes are *fully declared* and
+still harmful — the server's declaration check cannot fire there, and only a
+reader catches it.
+
+The bias is deliberate: a clean proposal is blocked perhaps half the time. An
+earlier, more permissive prompt produced critics that wrote the hidden change
+into their reasoning and then marked the patch acceptable, which is the failure
+that actually matters.
+
+**4. Coherence rules.** Domain invariants a JSON schema cannot express — a
 tier-2 supervisor must have a positive answer rate; the untenured rung must be
 exactly `{1, 0, 0}`; costs must outgrow output. Violations are rejected before
 simulation with an explanation, which teaches the agent mid-run.
@@ -155,7 +175,7 @@ npx tsx src/agent/demo.ts --approve                         # …and approve at 
 npx tsx src/agent/clearance-demo.ts                         # gated → cleared → gated
 npx tsx src/agent/autonomy.ts                               # the supervisor: earn and lose clearance
 npx tsx src/agent/autonomy.ts --once                        # current standing and gate
-npm test                                                    # 17 tests
+npm test                                                    # 36 tests (on the test branches until merged)
 ```
 
 Play it at `http://localhost:5173`. Hire past your span of control and watch
