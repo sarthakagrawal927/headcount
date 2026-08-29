@@ -24,6 +24,22 @@ export const RolePatchSchema = z.object({
     .describe('Fraction of questions a supervisor answers but still escalates upward.'),
   baseCost: z.number().min(0).optional().describe('Price of the first unit.'),
   costGrowth: z.number().min(1).optional().describe('Geometric price growth per unit owned: cost = baseCost * growth^owned. Typical 1.10–1.40.'),
+
+  softCap: z.object({
+
+    when: z.enum(['headcountAbove', 'queueAbove'])
+
+      .describe('headcountAbove counts units of this role; queueAbove counts waiting questions.'),
+
+    threshold: z.number().min(1).describe('The count past which returns diminish.'),
+
+    throughputMultiplier: z.number().min(0).max(1)
+
+      .describe('Applied to output beyond the threshold. 0.5 halves it.'),
+
+  }).optional()
+
+    .describe('Diminishing returns past a threshold. Use this to retire a dominant strategy instead of describing a cap in the blurb, which does nothing.'),
 });
 
 export const SopPatchSchema = z.object({

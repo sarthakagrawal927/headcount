@@ -97,8 +97,12 @@ literally, verified against the harness before the panel will convene) and fail
 closed: an unparseable verdict counts as a refutation. A majority blocks the
 proposal from ever being shown.
 
-On the patch that zeroed the player's income while claiming to add a
-supervisor, all three refuted it and two named the hidden effect outright. The
+It runs on the real path, not in a test. On a live proposal claiming to add a
+Line Lead, all three refuted it independently and for different reasons: the
+declared `escalateFraction` was 0.15 while the patch set 0.5; throughput fell
+4.21 → 4.07; and the role already existed, differing only in cost and
+description. `BLOCKED — 3 of 3 critics refuted this proposal. It is not going
+to a human.` The
 panel's value is clearest on a proposal whose changes are *fully declared* and
 still harmful — the server's declaration check cannot fire there, and only a
 reader catches it.
@@ -241,49 +245,50 @@ when asked to design something, and every one of them reads well in prose.
 
 ## Qodo Code Review Evidence
 
-Qodo has been connected to this repository and reviews every pull request.
-Substantive work goes through a branch and a PR; nothing meaningful lands
-directly on `main` without review.
+Qodo reviews every pull request on this repository. Substantive work goes
+through a branch and a PR; nothing meaningful lands on `main` unreviewed.
 
 **Representative PR: [#2 — Test the judgement that governs autonomy](https://github.com/sarthakagrawal927/headcount/pull/2)**
 
-Qodo's review of #2 raised a real architectural finding, not a style note. The
-autonomy supervisor held a **single pending observation**, so a change landing
-inside another's settling window replaced it. Qodo's alternative-approaches
-analysis named the consequence directly: the design could not "capture every
-landed patch when versions advance rapidly" or "support overlapping settlement
-windows".
+Qodo raised **six findings, four marked High**, and every one landed in
+`src/agent/autonomy.ts` — the file whose entire job is deciding whether an
+agent may act unsupervised, and therefore the one place where failing
+permissively is the outcome that must not happen. All four were real:
 
-That mattered more than it first appears. An unjudged change counts *neither*
-toward clearance nor against it — so a fast enough sequence of changes would
-freeze the agent's standing indefinitely, and the freeze would be
-indistinguishable from good behaviour. For code whose entire job is deciding
-whether an agent may act unsupervised, failing silently in the permissive
-direction is the one outcome that must not happen.
+| Finding | Why it mattered |
+| --- | --- |
+| **Persisted versions skip new runs** | Pack versions restart at 1 with the game process, so v2 today and v2 after a restart are different events. The ledger treated them as one, so a fresh run's first changes were skipped as already-seen — supervision silently suspended exactly when nobody was watching. |
+| **Restart strands unsettled entries** | `standing` ignores unsettled entries, so a change shipped moments before a crash counted neither for nor against clearance. A regression could disappear by being badly timed. |
+| **Startup leaves stale clearance** (security) | `reconcile` ran only after a settle, so a regression recorded before a restart left earned autonomy live until the next change happened to land — on a quiet system, never. |
+| **Critic panel never runs** | The adversarial panel was implemented, tested, documented — and called from no path anyone actually runs. Provisioning it added no review to the real flow. |
 
-**Our response** (commit on `main`, and answered in-thread): pending
-observations became a map keyed by version, settled oldest-first so the ledger
-preserves landing order, and every version appearing since the last poll is
-recorded rather than only the newest. Verified by landing two changes one
-second apart inside a ten-second window — both tracked, both judged
-independently.
+**What we changed.** Ledger entries are keyed by run and version together, with
+the game exposing a boot id for the purpose. Stranded observations are settled
+as *failures* at startup, because unobserved is not neutral and uncertainty
+counts against everywhere else in this file. `reconcile` now runs before the
+supervisor watches anything — seeded with a ledger ending in a regression, it
+revokes on startup. And the panel now convenes in `demo.ts` before a human is
+asked, which required a read-only `/explain` endpoint so it can compare
+*declared* effects against *actual* ones rather than trusting a proposal to
+describe itself.
 
-We also engaged with Qodo's two suggested alternatives rather than ignoring
-them. Its recommendation — keep the polling supervisor and the checked-in JSONL
-ledger for a single-agent system, and revisit before supporting concurrent
-changes — matched our reasoning: the ledger is checked in precisely because it
-is the audit trail a human reads to see what the agent was trusted with and
-why, and a transactional store would trade that legibility for concurrency
-guarantees this setup does not need. That trade-off is now recorded in a code
-comment at the decision point.
+Two further findings — a single pending observation, and patches landing
+between polls being skipped — were already fixed on `main`; Qodo was reading
+the branch diff. We said so in the thread rather than claiming credit.
 
-**[PR #1 — Test the claims the project actually makes](https://github.com/sarthakagrawal927/headcount/pull/1)**
-was reviewed by Qodo and returned clean: 0 bugs, 0 rule violations, 0
-requirement gaps. It had earlier taken a separate review finding — that the
-suite exercised only the `degenerate` failure shape and never `stalled`, which
-would have let a regression in stall detection mint apparently-playable
-evidence for a collapsed design — and both halves of that gap were closed
-before Qodo's pass.
+**Earlier on the same PR**, Qodo's alternative-approaches analysis flagged that
+the design could not "support overlapping settlement windows". We engaged with
+both alternatives it offered and recorded why the checked-in JSONL ledger stays
+— it is the audit trail a human reads to see what the agent was trusted with,
+and a transactional store would trade that legibility for concurrency
+guarantees a single-supervisor system does not need.
+
+**[PR #1](https://github.com/sarthakagrawal927/headcount/pull/1)** returned
+clean from Qodo: 0 bugs, 0 rule violations, 0 requirement gaps. It had earlier
+taken a separate finding — the suite exercised only the `degenerate` failure
+shape and never `stalled`, which would have let a regression in stall detection
+mint apparently-playable evidence for a collapsed design — closed before Qodo's
+pass.
 
 ## Notes
 

@@ -21,6 +21,20 @@ import type { ContentPatch } from './schemas.js';
 
 const TICK_DT = 0.25;
 
+/**
+ * Identifies this run of the game process.
+ *
+ * Pack versions restart at 1 whenever the server does, so a version number
+ * alone does not identify a change: v2 today and v2 after a restart are
+ * different events. Anything keeping a durable record of what the agent
+ * shipped needs to tell them apart.
+ */
+const BOOT_ID = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+export function bootId(): string {
+  return BOOT_ID;
+}
+
 /** Whether the company plays itself when nobody is driving it. */
 const AUTOPLAY = process.env.HEADCOUNT_AUTOPLAY !== '0';
 /** Never fast-forward more than this after a pause; a stalled process should not teleport. */
@@ -330,6 +344,14 @@ function breadthErrors(summary: string[]): string[] {
   ];
 }
 
+/** Render a patch value for a human reading a change summary. */
+function render(v: unknown): string {
+  if (v === undefined) return 'unset';
+  if (v === null) return 'null';
+  if (typeof v === 'object') return JSON.stringify(v);
+  return String(v);
+}
+
 export function applyPatchToPack(
   pack: ContentPack,
   patch: ContentPatch,
@@ -363,7 +385,10 @@ export function applyPatchToPack(
     if (existing) {
       const changed = Object.entries(patchRole)
         .filter(([k, v]) => k !== 'id' && v !== undefined && (existing as any)[k] !== v)
-        .map(([k, v]) => `${k} ${(existing as any)[k]} -> ${v}`);
+        // Nested values must be rendered, not coerced: a summary reading
+        // "softCap undefined -> [object Object]" tells the approving human
+        // nothing about what they are approving.
+        .map(([k, v]) => `${k} ${render((existing as any)[k])} -> ${render(v)}`);
       Object.assign(existing, Object.fromEntries(Object.entries(patchRole).filter(([, v]) => v !== undefined)));
       if (changed.length) summary.push(`role ${patchRole.id}: ${changed.join(', ')}`);
     } else {

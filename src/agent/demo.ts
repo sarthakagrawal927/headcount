@@ -9,10 +9,14 @@
 
 import { isEventDelta, mergeEventDelta } from '@truefoundry/trueforge-sdk';
 import { createClient } from './client.js';
+import { convene, type Proposal } from './critic.js';
 import { createSession } from './session.js';
 
 const AUTO_APPROVE = process.argv.includes('--approve');
 const AUTO_DENY = process.argv.includes('--deny');
+
+/** Set once the session opens; the panel's denial path needs it. */
+let SESSION_ID = '';
 
 const BRIEF = `Look at the factory floor as it stands right now.
 
@@ -27,13 +31,52 @@ const BRIEF = `Look at the factory floor as it stands right now.
 const dim = (s: string) => `\x1b[2m${s}\x1b[0m`;
 const bold = (s: string) => `\x1b[1m${s}\x1b[0m`;
 
+/** Resolve a pending gate one way or the other. */
+async function respond(
+  threadId: string,
+  toolCallId: string,
+  allow: boolean,
+  reason?: string,
+): Promise<void> {
+  const client = createClient();
+  const stream = await client.sessions.createTurnStream(SESSION_ID, {
+    input: [
+      {
+        type: 'user.tool_approval',
+        threadId,
+        toolCallId,
+        approval: allow ? { status: 'allow' } : { status: 'deny', reason: reason ?? 'denied' },
+      } as any,
+    ],
+  });
+  for await (const _ of stream.withMetadata()) {
+    // drain
+  }
+}
+
+/** What the server says this evidence token actually applies. */
+async function explain(evidence?: string): Promise<string[]> {
+  if (!evidence) return [];
+  const base = process.env.GAME_URL ?? 'http://localhost:3001';
+  try {
+    const res = await fetch(`${base}/explain?evidence=${encodeURIComponent(evidence)}`);
+    if (!res.ok) return [];
+    const data = (await res.json()) as { applied?: string[] };
+    return data.applied ?? [];
+  } catch {
+    return [];
+  }
+}
+
 async function main(): Promise<void> {
   const client = createClient();
   const { sessionId } = await createSession();
+  SESSION_ID = sessionId;
   console.log(dim(`session ${sessionId}\n`));
 
   const events = new Map<string, any>();
   const pending: any[] = [];
+  const questions: any[] = [];
 
   const runTurn = async (message: string): Promise<void> => {
   const stream = await client.sessions.createTurnStream(sessionId, {
@@ -79,6 +122,12 @@ async function main(): Promise<void> {
       case 'tool.approval_required':
         pending.push(event);
         break;
+      case 'tool.response_required':
+        // A clarifying question is also a pause, and a session with any pause
+        // outstanding rejects the next user message. Nudging into one throws a
+        // 422 and takes the run down.
+        questions.push(event);
+        break;
       case 'turn.done':
         console.log(dim(`\n[turn ${(event as any).state?.status}]`));
         break;
@@ -86,7 +135,34 @@ async function main(): Promise<void> {
   }
   };
 
+  /** Answer anything the agent asked, so the next turn is accepted. */
+  const clearQuestions = async (): Promise<void> => {
+    while (questions.length) {
+      const q = questions.shift();
+      for (const ref of q.toolCalls ?? []) {
+        try {
+          const stream = await client.sessions.createTurnStream(sessionId, {
+            input: [
+              {
+                type: 'user.tool_response',
+                threadId: q.threadId ?? 'main',
+                toolCallId: ref.id,
+                content: 'Use your judgement and proceed.',
+              } as any,
+            ],
+          });
+          for await (const _ of stream.withMetadata()) {
+            // drain
+          }
+        } catch {
+          // Nothing more to do here; the next turn will surface the failure.
+        }
+      }
+    }
+  };
+
   await runTurn(BRIEF);
+  await clearQuestions();
 
   // Smaller models routinely stop after reporting a good simulation instead of
   // acting on it, and sometimes never reach the tool at all. Nudges escalate
@@ -102,6 +178,7 @@ async function main(): Promise<void> {
     if (pending.length) break;
     console.log(dim(`\n— nudging —\n`));
     await runTurn(nudge);
+    await clearQuestions();
   }
 
   if (!pending.length) {
@@ -123,6 +200,41 @@ async function main(): Promise<void> {
         }
       }
       console.log(bold('╚═══════════════════════════════════════════════════'));
+
+      // Convene the panel BEFORE a human is asked. A proposal a majority of
+      // critics can refute should not consume anyone's attention, and one that
+      // survives should arrive with its dissent attached rather than as an
+      // unopposed pitch. Skipped with --no-panel when demonstrating the gate
+      // alone.
+      let panelBlocked = false;
+      if (!process.argv.includes('--no-panel')) {
+        const parsed = args ? JSON.parse(args) : {};
+        const evidence: string | undefined = parsed.evidence ?? parsed.input?.evidence;
+        const actualEffects = await explain(evidence);
+
+        const proposal: Proposal = {
+          rationale: parsed.rationale ?? parsed.input?.rationale ?? '',
+          declaredChanges: parsed.changes ?? parsed.input?.changes ?? [],
+          patch: parsed.patch ?? parsed.input?.patch,
+          actualEffects,
+          evidence,
+        };
+
+        console.log(dim('\n  convening the panel…'));
+        const panel = await convene(proposal);
+        for (const v of panel.verdicts) {
+          const mark = v.refuted ? bold('REFUTED') : 'passed ';
+          console.log(`  ${mark} ${v.lens}: ${v.reason}`);
+        }
+        console.log(bold(`  ${panel.summary}`));
+        panelBlocked = panel.blocked;
+      }
+
+      if (panelBlocked) {
+        console.log(bold('\n✗ denied by the panel — the human was never asked'));
+        await respond(p.threadId, ref.id, false, 'blocked by the critic panel');
+        return;
+      }
 
       if (!AUTO_APPROVE && !AUTO_DENY) {
         console.log(dim('\nRun again with --approve or --deny to resolve it.'));

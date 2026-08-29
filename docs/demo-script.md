@@ -69,6 +69,26 @@ Let its diagnosis scroll. Do not read it aloud; let it be visibly its own work.
 > disagree with it. A design that deletes the wall improves every metric and
 > ruins the game, so that comes back as *degenerate* and is refused."
 
+## 1:45 — Three critics try to tear it down
+
+Before anything reaches you, the panel convenes — three agents on different
+lenses, each trying to *refute* the proposal.
+
+> "A human approving everything ends up approving everything. So a proposal has
+> to survive being attacked first. Three critics, read-only by construction,
+> each looking for a different failure: did the patch do something the
+> rationale doesn't admit, did it break something that already worked, is this
+> actually new or the same mechanic in a new hat."
+
+If they block it — which they often do, and correctly — that is the beat:
+
+> "Three of three refuted it. It said it was adding a supervisor; it was
+> editing the one that exists, with a number that doesn't match its own
+> description. I was never asked. That's the point — my attention is the
+> resource this whole game is about, and it wasn't spent on this."
+
+Then run it again for one that survives.
+
 ## 1:50 — The gate
 
 The approval card appears.
