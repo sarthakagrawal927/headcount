@@ -89,10 +89,14 @@ async function main(): Promise<void> {
   await runTurn(BRIEF);
 
   // Smaller models routinely stop after reporting a good simulation instead of
-  // acting on it. One nudge, not an infinite retry — if it still will not ask
-  // for the change it validated, that is a real result and should be visible.
+  // acting on it, and sometimes never reach the tool at all. Nudges escalate
+  // in directness rather than repeating; the loop is bounded so that an agent
+  // which simply will not ask for the change it validated shows up as a real
+  // result rather than an infinite retry.
   const NUDGES = [
     'You validated that design. Call apply_patch now with the exact diff you simulated, and put the simulated numbers in your rationale.',
+    'Call simulate_patch on your proposed diff, take the `evidence` token it returns, then call apply_patch with that same diff, your rationale, and that token. Do it in this turn.',
+    'Do not explain. Make two tool calls now: simulate_patch with your diff, then apply_patch with the same diff plus the evidence token from the first call.',
   ];
   for (const nudge of NUDGES) {
     if (pending.length) break;

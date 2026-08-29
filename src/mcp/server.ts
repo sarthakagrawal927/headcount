@@ -33,7 +33,7 @@ import {
   roleReadout,
 } from './gameStore.js';
 import { ContentPatchSchema, PlayPolicySchema } from './schemas.js';
-import { mint, verify, type Verdict } from './evidence.js';
+import { mint, recall, tokenFingerprint, verify, type Verdict } from './evidence.js';
 
 const PORT = Number(process.env.PORT ?? 3001);
 const HOST = process.env.HOST ?? '0.0.0.0';
@@ -186,8 +186,9 @@ function buildServer(): McpServer {
         ...result,
         evidence,
         nextStep:
-          'If the numbers support the change, call apply_patch with this SAME patch and pass `evidence` ' +
-          'exactly as returned above. A human will be asked to approve it, and they will read this verdict.',
+          'If the numbers support the change, call apply_patch with `evidence` set to the token above and ' +
+          'NO patch argument — that applies exactly what was just simulated. Do not retype the diff; ' +
+          'regenerating it produces a different patch and the change will be refused.',
       });
     },
   );
@@ -202,12 +203,26 @@ function buildServer(): McpServer {
         'DESTRUCTIVE. Merges a ContentPack diff into the LIVE running game: players feel this immediately and it ' +
         'cannot be undone except by another patch. Headcount, installed SOPs and tenure levels are reconciled ' +
         'against the new pack (workers in deleted roles are lost, tenure above the new ladder is clipped). ' +
-        'Simulate first — apply only what simulate_patch showed to be an improvement, and put your reasoning in ' +
-        '`note` because that is what the approving human reads.',
+        'Call it with the `evidence` token from simulate_patch and NO patch argument: that applies exactly ' +
+        'the diff that was measured. Retyping the diff regenerates it into something subtly different and ' +
+        'the change will be refused. Put your reasoning in `rationale` — that is what the approving human reads.',
       inputSchema: {
-        patch: ContentPatchSchema,
+        patch: ContentPatchSchema.optional()
+          .describe(
+            'OPTIONAL, and best left out. Omit it and the exact patch you simulated is applied — which is ' +
+            'almost always what you want. Supply it only to be explicit, and then it must match what the ' +
+            'evidence token was minted for, byte for byte in meaning.',
+          ),
         rationale: z.string().min(1)
           .describe('Why this change, in one or two sentences, citing the simulated numbers you are relying on.'),
+        changes: z.array(z.string()).min(1)
+          .describe(
+            'EVERY change this patch makes, one per line, in plain English — including anything incidental. ' +
+            'This is the list the approving human reads, so it must be complete: the server compares it ' +
+            'against what the patch actually does and refuses the change if anything is undeclared. ' +
+            'Example: ["adds a tier-2 Quality Inspector at $150", "sets clickRevenue to 0", ' +
+            '"lowers incidentThreshold to 1"].',
+          ),
         evidence: z.string().min(1)
           .describe(
             'The token returned by simulate_patch for THIS EXACT patch. It is signed and carries the verdict, ' +
@@ -224,11 +239,35 @@ function buildServer(): McpServer {
         openWorldHint: false,
       },
     },
-    async ({ patch, rationale, evidence }) => {
+    async ({ patch, rationale, changes, evidence }) => {
+      // Apply what was measured. When the caller does not restate the patch we
+      // recover it from the simulation the token was minted for, which removes
+      // the whole class of drift between simulating one diff and applying a
+      // regenerated one.
+      // An empty object counts as "not supplied". Models reliably emit `{}`
+      // for an optional object rather than omitting the key, and treating that
+      // as a real (empty) patch fingerprints to something the token was never
+      // minted for — a refusal with a confusing explanation.
+      const supplied =
+        patch && Object.values(patch).some((v) => v !== undefined);
+
+      let subject = supplied ? patch : undefined;
+      if (!subject) {
+        const fp = tokenFingerprint(evidence);
+        subject = fp ? recall(fp) : undefined;
+        if (!subject) {
+          return fail('Patch refused: the live game is unchanged.', {
+            problem:
+              'No patch was supplied and the evidence token does not correspond to a simulation still on ' +
+              'record. Run simulate_patch again and apply with the token it returns.',
+          });
+        }
+      }
+
       // Checked before anything else: an unevidenced change is refused even
       // when a human has already approved it. Approval covers whether the
       // change is wanted, not whether it was ever measured.
-      const check = verify(evidence, patch);
+      const check = verify(evidence, subject);
       if (!check.ok) {
         return fail('Patch refused: evidence check failed. The live game is unchanged.', {
           problem: check.reason,
@@ -236,13 +275,34 @@ function buildServer(): McpServer {
       }
 
       const game = await getGame();
-      const { pack, summary, errors } = applyPatchToPack(game.pack, patch);
+      const { pack, summary, errors } = applyPatchToPack(game.pack, subject);
       if (errors.length) return fail('Patch rejected; the live game is unchanged.', { problems: errors });
-      commitPatch(game, pack, summary, patch.note ?? rationale);
+
+      // Applying by reference means the diff itself never appears in the tool
+      // arguments, so the human approving it would otherwise be reading a
+      // rationale and taking the rest on trust. Requiring a declaration and
+      // checking it against the real summary puts the changes back in front of
+      // them — and catches the specific failure this was written for: a patch
+      // that quietly zeroed click revenue while arguing about supervisors.
+      const undeclared = summary.filter((change) => {
+        const subject = declarationKey(change);
+        return !changes.some((d) => d.toLowerCase().includes(subject));
+      });
+      if (undeclared.length) {
+        return fail('Patch refused: the change list is incomplete. The live game is unchanged.', {
+          undeclared,
+          problem:
+            'Every change must appear in `changes`, including incidental ones. The human approving this ' +
+            'reads that list and nothing else. Declare these and call again.',
+        });
+      }
+
+      commitPatch(game, pack, summary, subject.note ?? rationale);
       return json({
         ok: true,
         packVersion: pack.version,
         applied: summary,
+        declared: changes,
         rationale,
         evidenceVerdict: check.verdict,
         state: game.state,
@@ -343,6 +403,21 @@ function buildServer(): McpServer {
 }
 
 /* --------------------------------------------------------------- transport */
+
+/**
+ * The identifying subject of a change summary line, used to check that the
+ * agent's plain-English declaration actually mentions it. Summary lines look
+ * like "clickRevenue: 1 -> 0" or "added role quality_inspector (tier 2)"; the
+ * subject is the field or entity being changed.
+ */
+function declarationKey(change: string): string {
+  const scalar = /^([A-Za-z]+):/.exec(change);
+  if (scalar) return scalar[1].toLowerCase();
+  const entity = /\b(role|SOP)\s+([A-Za-z0-9_.-]+)/i.exec(change);
+  if (entity) return entity[2].toLowerCase();
+  if (/tenure ladder/i.test(change)) return 'tenure';
+  return change.toLowerCase().slice(0, 12);
+}
 
 const app = express();
 app.use(express.json({ limit: '4mb' }));

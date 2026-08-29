@@ -28,6 +28,35 @@ const SECRET = randomBytes(32);
 /** Tokens expire so a stale verdict cannot justify a change made much later. */
 const TTL_MS = 30 * 60 * 1000;
 
+/**
+ * What was actually simulated, keyed by fingerprint.
+ *
+ * Models rewrite their own diff between simulating it and applying it — not
+ * maliciously, just by regenerating JSON from a description rather than
+ * copying it. The fingerprint check catches that every time, which is correct
+ * but leaves the agent stuck in a loop it cannot see its way out of. Keeping
+ * the simulated patch means `apply_patch` can be asked to apply *what was
+ * measured* rather than a fresh restatement of it.
+ */
+const simulated = new Map<string, { patch: ContentPatch; at: number }>();
+
+/** Retrieve the exact patch a token was minted for, if it is still fresh. */
+export function recall(fp: string): ContentPatch | undefined {
+  const entry = simulated.get(fp);
+  if (!entry) return undefined;
+  if (Date.now() - entry.at > TTL_MS) {
+    simulated.delete(fp);
+    return undefined;
+  }
+  return entry.patch;
+}
+
+/** The fingerprint a token was minted for, without verifying it. */
+export function tokenFingerprint(token: string): string | undefined {
+  const parts = token.split('.');
+  return parts.length === 4 ? parts[0] : undefined;
+}
+
 export interface Verdict {
   degenerate: boolean;
   stalled: boolean;
@@ -85,6 +114,7 @@ function describe(v: Verdict): string {
 /** Mint a token for a patch that has actually been run. */
 export function mint(patch: ContentPatch, verdict: Verdict): string {
   const fp = fingerprint(patch);
+  simulated.set(fp, { patch, at: Date.now() });
   const expires = Date.now() + TTL_MS;
   const body = `${fp}.${describe(verdict)}.${expires}`;
   const sig = createHmac('sha256', SECRET).update(body).digest('hex').slice(0, 16);
