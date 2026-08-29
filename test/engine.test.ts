@@ -150,3 +150,50 @@ describe('the stalled failure shape', () => {
     assert.ok(!score.degenerate, 'a stalled run is not also degenerate');
   });
 });
+
+describe('the simulated player saves for the right purchase', () => {
+  it('buys a supervisor worth several workers instead of more workers', () => {
+    // Considering only what is affordable right now is myopia, not greed:
+    // cheap producers are always affordable, so a run spends every dollar as it
+    // arrives and never accumulates enough for the structural purchase that
+    // raises the ceiling.
+    //
+    // This is not a balance quirk. It made simulation blind to exactly the
+    // change the agent proposes most — a new supervisor tier — so a patch
+    // adding one scored identically to no patch at all, and the numbers the
+    // agent quoted at the approval gate carried no information about the thing
+    // being approved.
+    const withSupervisor = {
+      ...SEED_PACK,
+      roles: [
+        ...SEED_PACK.roles,
+        {
+          id: 'super_test',
+          name: 'Super',
+          blurb: 'absorbs a great deal',
+          tier: 2,
+          throughput: 0,
+          confusion: 0,
+          revenuePerTask: 0,
+          answerRate: 8,
+          escalateFraction: 0.05,
+          baseCost: 120,
+          costGrowth: 1.1,
+        },
+      ],
+    };
+
+    const seed = simulate(SEED_PACK, { mode: 'greedy' }, 300);
+    const patched = simulate(withSupervisor, { mode: 'greedy' }, 300);
+
+    assert.ok(
+      (patched.final.headcount['super_test'] ?? 0) > 0,
+      'the run never bought the supervisor, so the simulation cannot see it',
+    );
+    assert.ok(
+      patched.score.finalThroughput > seed.score.finalThroughput * 1.5,
+      'a supervisor answering 8 questions/s should move the ceiling substantially; got ' +
+        `${seed.score.finalThroughput.toFixed(2)} -> ${patched.score.finalThroughput.toFixed(2)}`,
+    );
+  });
+});
