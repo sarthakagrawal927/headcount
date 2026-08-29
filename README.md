@@ -48,7 +48,7 @@ any model. Design isn't closed-form, so that's the job it gets:
 
 1. Reads the live game through MCP (`get_state`, `get_telemetry`, `get_content`)
 2. Diagnoses where the wall is and which escape the content pack fails to make attractive
-3. Designs a change, guided by a `SKILL.md` carrying the genre's real math and a taxonomy of structural novelty
+3. Designs a change, guided by a git-backed `SKILL.md` carrying the genre's real math and a taxonomy of structural novelty — only its name and description sit in context; the body is sparse-cloned into the sandbox and read when the agent decides it is relevant
 4. **Proves it** with `simulate_patch` — headless, deterministic, across play archetypes
 5. Asks a human to approve before `apply_patch` touches the running game
 
@@ -86,12 +86,45 @@ simulation with an explanation, which teaches the agent mid-run.
 TrueForge stores each agent's approval policy in its manifest and **re-resolves
 that manifest on every turn**. So clearance is a runtime property: narrowing
 `requireApprovalForTools` via `agents.update` grants autonomy mid-session, and
-widening it takes autonomy back. Trust is spent by failure rather than declared
-at deploy time (`src/agent/trust.ts`).
+widening it takes it back (`src/agent/trust.ts`).
+
+Nobody grants it by hand. `src/agent/autonomy.ts` is a supervisor process that
+watches the live game, measures the floor before and after every change the
+agent lands, and writes the result to an auditable ledger. A run of changes
+that did not make things worse earns clearance; one that did takes it back
+immediately. It talks only to the game's read surface and the harness's agent
+API, so it works regardless of who applied the change.
+
+Approval gates are a good default and a bad steady state: a human who must
+approve everything forever ends up approving everything without reading it.
+
+**The run that justifies the whole design.** The agent proposed raising riveter
+confusion from 0.3 to 0.9 — framed as tightening tolerances. The simulator
+passed it: *"the run grows, meets the attention wall, and stays playable past
+it."* Evidence binding passed it. It had earned clearance, so **it applied with
+no human involved at all.** Throughput on the real floor then fell from 4.59 to
+1.56 tasks/s, the supervisor judged it a regression, and clearance was revoked
+automatically.
+
+Simulation was not sufficient. A design can clear every pre-flight check and
+still be wrong in production, and the only thing that catches that is watching
+what actually happens and being willing to take autonomy back.
 
 The footgun this depends on: the session must be bound to the agent **by name**.
 An inline spec freezes the manifest for the session's life and the rewrite
 silently does nothing.
+
+## Harness surface used
+
+| Capability | How |
+| --- | --- |
+| MCP tools | The game is a remote MCP server; 7 tools, annotated so the harness can gate them |
+| Sandbox | Local provider — skills and the MCP client script mount there, no Daytona key required |
+| Skills | `idle-game-design` sparse-cloned from this repo, loaded on demand |
+| Approval gates | `requireApprovalForTools` on all three mutating tools |
+| Subagents | Enabled for fanning playtests across competing play archetypes |
+| Session persistence | Sessions bound by name, so manifest changes take effect on the next turn |
+| Context management | Compaction and large-tool-response offloading on |
 
 ## Running it
 
@@ -105,6 +138,10 @@ npx @truefoundry/trueforge@latest # the harness on :8790
 MODEL_FQN=<provider/model> npx tsx src/agent/provision.ts   # create the agent
 npx tsx src/agent/demo.ts                                   # run the design loop
 npx tsx src/agent/demo.ts --approve                         # …and approve at the gate
+npx tsx src/agent/clearance-demo.ts                         # gated → cleared → gated
+npx tsx src/agent/autonomy.ts                               # the supervisor: earn and lose clearance
+npx tsx src/agent/autonomy.ts --once                        # current standing and gate
+npm test                                                    # 17 tests
 ```
 
 Play it at `http://localhost:5173`. Hire past your span of control and watch
@@ -121,6 +158,27 @@ throughput fall. `?cash=400&hire=14` jumps straight to the wall.
 | `src/gateway/`  | OpenAI-compatible shim (see below)                                    |
 | `skills/`       | `SKILL.md` design playbook loaded on demand                           |
 | `docs/`         | Decision log and what we learned about the harness                    |
+
+## What actually happened on real runs
+
+Every control in this project was added because of something the agent did,
+not because of something we imagined it might do. In order:
+
+1. It proposed a supervisor with `answerRate: 0` — one that cannot answer a
+   single question — with a rationale citing attention figures that patch could
+   not produce. → **coherence rules**
+2. It simulated one patch and asked to apply a different one. → the
+   **fingerprint check** named both, exactly.
+3. It simulated a design, received `DEGENERATE-no-wall`, attached that failing
+   verdict as its evidence anyway, and a human approved it. → **the server
+   refused it regardless.**
+4. It asked to apply what it described as *"adds a tier-2 Line Lead role"*. The
+   patch also cut the existing Line Lead from 3.0 answers/sec to 0.3 —
+   crippling the only working supervisor — and zeroed the player's hand-earned
+   income. Neither appeared in its change list. → **declared-changes check.**
+
+None of these are adversarial prompts. They are what a competent model does
+when asked to design something, and every one of them reads well in prose.
 
 ## Qodo Code Review Evidence
 

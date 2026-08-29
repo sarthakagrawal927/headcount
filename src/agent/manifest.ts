@@ -159,6 +159,8 @@ export async function verifyToolAnnotations(mcpUrl: string = MCP_URL): Promise<{
 
 export const DEFAULT_MODEL_FQN = process.env.MODEL_FQN ?? 'anthropic/claude-sonnet-4-6';
 
+export const SKILL_NAME = 'idle-game-design';
+
 export const INSTRUCTIONS = `You are the staff game designer on HEADCOUNT, an idle game whose production units are
 AI-agent-like workers: fast, tireless, and uncertain. Uncertain workers raise QUESTIONS. Questions escalate to the
 player, whose attention is a fixed rate that never scales. Hiring more workers therefore saturates attention and
@@ -215,6 +217,10 @@ export function buildMcpServerManifest(url: string = MCP_URL): TrueForgeApi.McpS
 }
 
 export interface ManifestOptions {
+  /** Git-backed SKILL.md packs to attach. Requires the sandbox. */
+  skills?: string[];
+  /** Isolated execution for skills and code. Required by `skills`. */
+  sandbox?: boolean;
   /** Let the agent ask clarifying questions. Off for focused demos. */
   askUserQuestions?: boolean;
   /** Let the harness fan out to subagents. */
@@ -246,6 +252,8 @@ export function buildAgentManifest(options: ManifestOptions = {}): TrueForgeApi.
     instructions = INSTRUCTIONS,
     askUserQuestions = true,
     dynamicSubAgents = true,
+    skills = [SKILL_NAME],
+    sandbox = true,
   } = options;
 
   return {
@@ -261,7 +269,16 @@ export function buildAgentManifest(options: ManifestOptions = {}): TrueForgeApi.
         requireApprovalForTools,
       },
     ],
+    // The design playbook — the ceiling equation, prestige exponents, the
+    // taxonomy of structural novelty — lives in a git-backed SKILL.md rather
+    // than the system prompt. Only its name and description sit in context;
+    // the body is read from the sandbox when the agent decides it is relevant.
+    // That is what skills are for, and it keeps the prompt about this agent's
+    // role rather than about idle-game mathematics.
+    skills: skills.map((name) => ({ name })),
     config: {
+      // Required for skills, and for any code the agent needs to run.
+      sandbox: { enabled: sandbox },
       // Playtesting competing policies is embarrassingly parallel.
       dynamicSubAgents: { enabled: dynamicSubAgents },
       // Design taste is a question for a human, not a thing to guess. Turned
