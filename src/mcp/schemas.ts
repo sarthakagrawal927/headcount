@@ -17,11 +17,11 @@ export const RolePatchSchema = z.object({
     .describe('1 = individual contributor (produces + asks questions), 2 = supervisor (absorbs questions), 3 = manager of managers.'),
   throughput: z.number().min(0).optional().describe('Tasks completed per second by one unblocked worker. Supervisors: 0.'),
   confusion: z.number().min(0).max(1).optional()
-    .describe('Probability a completed task raises a question. This is the pressure on player attention — the single most load-bearing number in the game.'),
+    .describe('Probability a completed task raises a question.'),
   revenuePerTask: z.number().min(0).optional().describe('Cash per non-defective task. Supervisors earn nothing directly.'),
   answerRate: z.number().min(0).optional().describe('Questions per second this role answers on the player behalf. Producers: 0.'),
   escalateFraction: z.number().min(0).max(1).optional()
-    .describe('Fraction of questions a supervisor answers but still escalates upward. 0 = absorbs everything, 1 = pure middle management.'),
+    .describe('Fraction of questions a supervisor answers but still escalates upward.'),
   baseCost: z.number().min(0).optional().describe('Price of the first unit.'),
   costGrowth: z.number().min(1).optional().describe('Geometric price growth per unit owned: cost = baseCost * growth^owned. Typical 1.10–1.40.'),
 });
@@ -32,7 +32,7 @@ export const SopPatchSchema = z.object({
   blurb: z.string().optional(),
   roleId: z.string().optional().describe('Role this written procedure documents. Must match a role id in the pack.'),
   confusionMultiplier: z.number().min(0).max(1).optional()
-    .describe('Multiplier on that role confusion. 0.5 halves how often it asks. This is the "write it down" escape from the attention wall.'),
+    .describe('Multiplier on that role confusion. 0.5 halves how often it asks.'),
   cost: z.number().min(0).optional(),
 });
 
@@ -51,14 +51,14 @@ export const ContentPatchSchema = z.object({
   tenureLadder: z.array(TenureLevelSchema).min(1).optional()
     .describe('Full replacement of the tenure ladder. Index 0 must be the untenured rung: escalationMultiplier 1, errorRate 0, cost 0.'),
   playerAnswerRate: z.number().min(0).optional()
-    .describe('Questions per second the player can personally answer. The one resource that never scales — raise it only deliberately.'),
+    .describe('Questions per second the player can personally answer.'),
   clickRevenue: z.number().min(0).optional().describe('Cash for a task the player completes by hand.'),
   incidentThreshold: z.number().min(1).optional().describe('Defects tolerated before an incident claws a tenure rung back.'),
 }).describe('A diff against the active ContentPack. Everything omitted stays as it is.');
 
 export const PlayPolicySchema = z.object({
   mode: z.enum(['greedy', 'scripted']).default('greedy')
-    .describe('greedy = buy the best marginal return affordable at every tick (the naive optimiser, and the one that walks straight into the wall). scripted = follow your ordered plan.'),
+    .describe('greedy = buy the best marginal return affordable at every tick (the naive optimiser, and the one that walks straight into the wall).'),
   // Deliberately a flat object rather than a discriminated union. A union
   // serialises to `oneOf`, and several model providers reject `oneOf` inside a
   // tool's parameter schema outright — which surfaces as an opaque 400 rather
@@ -75,7 +75,7 @@ export const PlayPolicySchema = z.object({
       upTo: z.number().int().min(1).optional()
         .describe('For "hire": stop hiring this role once headcount reaches this number.'),
     }),
-  ).optional().describe('Ordered purchase intents, retried every tick until affordable. Earlier entries win. Required when mode is "scripted".'),
+  ).optional().describe('Ordered purchase intents, retried every tick until affordable.'),
   label: z.string().optional().describe('Archetype name, e.g. "hire-only", "sop-first", "tenure-rush". Use it when comparing playtests.'),
 }).describe('How a run spends money. This is the "player" in a headless playtest.');
 

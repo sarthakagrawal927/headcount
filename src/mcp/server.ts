@@ -144,13 +144,10 @@ function buildServer(): McpServer {
     {
       title: 'Playtest a proposed change (headless)',
       description:
-        'Your evidence tool, and the only honest way to argue for a design. Applies a proposed ContentPack diff ' +
-        'to a COPY of the active pack, runs a headless playtest under a given play policy, and runs the same ' +
-        'policy against the unpatched pack for comparison. Returns both scores plus deltas: time-to-wall, peak ' +
-        'and final throughput, mean attention utilisation, lifetime cash, incidents, and two failure flags — ' +
-        '`degenerate` (no wall ever, the player is never needed, there is no game) and `stalled` (throughput ' +
-        'collapsed and never recovered). Never touches the live game. Run this before apply_patch, and quote the ' +
-        'numbers when you ask a human to approve.',
+        'Playtest a proposed ContentPack diff headlessly against a copy of the active pack, and against the ' +
+        'unpatched pack for comparison. Returns both scores, their deltas, and two failure flags: `degenerate` ' +
+        '(no wall, the player is never needed) and `stalled` (throughput collapsed). Never touches the live ' +
+        'game. Returns an `evidence` token bound to this exact diff — apply_patch requires it.',
       inputSchema: {
         patch: ContentPatchSchema,
         policy: PlayPolicySchema.optional()
@@ -200,18 +197,22 @@ function buildServer(): McpServer {
     {
       title: 'Apply a change to the live game',
       description:
-        'DESTRUCTIVE. Merges a ContentPack diff into the LIVE running game: players feel this immediately and it ' +
-        'cannot be undone except by another patch. Headcount, installed SOPs and tenure levels are reconciled ' +
-        'against the new pack (workers in deleted roles are lost, tenure above the new ladder is clipped). ' +
-        'Call it with the `evidence` token from simulate_patch and NO patch argument: that applies exactly ' +
-        'the diff that was measured. Retyping the diff regenerates it into something subtly different and ' +
-        'the change will be refused. Put your reasoning in `rationale` — that is what the approving human reads.',
+        'DESTRUCTIVE. Merges a diff into the LIVE game; players feel it immediately. Call with the `evidence` ' +
+        'token from simulate_patch and NO patch argument — that applies exactly what was measured; retyping ' +
+        'the diff regenerates it and the change is refused. `rationale` and `changes` are both REQUIRED: ' +
+        'rationale is your argument, changes is every effect in plain English, and the server refuses the ' +
+        'patch if anything it does is missing from that list.',
       inputSchema: {
-        patch: ContentPatchSchema.optional()
+        // Deliberately loose rather than the full ContentPatchSchema. Repeating
+        // that schema here duplicated ~4k characters of tool definition in
+        // every request for an argument the agent is told not to send — and on
+        // a gateway with a token ceiling, that duplication was the difference
+        // between running and not. The value is still validated on the way in
+        // by applyPatchToPack; what changes is only what the model is shown.
+        patch: z.record(z.string(), z.unknown()).optional()
           .describe(
-            'OPTIONAL, and best left out. Omit it and the exact patch you simulated is applied — which is ' +
-            'almost always what you want. Supply it only to be explicit, and then it must match what the ' +
-            'evidence token was minted for, byte for byte in meaning.',
+            'OPTIONAL, and best left out: omit it and the exact patch you simulated is applied. Supply it ' +
+            'only to be explicit, and it must then match what the evidence token was minted for.',
           ),
         rationale: z.string().min(1)
           .describe('Why this change, in one or two sentences, citing the simulated numbers you are relying on.'),
@@ -297,7 +298,10 @@ function buildServer(): McpServer {
         });
       }
 
-      commitPatch(game, pack, summary, subject.note ?? rationale);
+      // `subject` may be the loosely-typed argument rather than a parsed
+      // patch, so its note is unknown until checked.
+      const note = typeof subject.note === 'string' ? subject.note : rationale;
+      commitPatch(game, pack, summary, note);
       return json({
         ok: true,
         packVersion: pack.version,

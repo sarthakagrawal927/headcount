@@ -127,6 +127,22 @@ Let that sit.
 > This one makes your attention the thing that runs out — and the trust
 > something you get back only by earning it again."
 
+## If it stalls mid-take
+
+The free gateway allows **8,000 tokens per minute** and cannot be pinned to a
+model. Two failure shapes, both recoverable:
+
+- **The turn errors and the shim logs `413 Request too large`.** The
+  conversation has grown past the ceiling. Start a fresh round rather than
+  nudging — each nudge adds to the same conversation and makes it worse.
+- **The turn errors with `402` or `All providers failed`.** A free upstream is
+  momentarily exhausted. The shim already retries with backoff; if it gives up,
+  simply run the round again.
+
+With a real provider key neither happens: set `MODEL_FQN` to that provider and
+skip the shim entirely. If you have one, use it for the recording — the design
+quality is visibly better and the failure modes above disappear.
+
 ## Notes
 
 - Never show the terminal that has `GATEWAY_KEY` in it.

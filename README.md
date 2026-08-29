@@ -113,6 +113,30 @@ tier-2 supervisor must have a positive answer rate; the untenured rung must be
 exactly `{1, 0, 0}`; costs must outgrow output. Violations are rejected before
 simulation with an explanation, which teaches the agent mid-run.
 
+## What the controls do not catch
+
+Worth stating plainly, because the generated run log made it obvious and a
+tidier project would have hidden it.
+
+Every control here checks what a patch **does**. Nothing checks what a patch
+**claims to do but doesn't**. The agent repeatedly announced mechanics it had
+not implemented: *"a soft cap on riveter throughput at 2.5 tasks/sec when the
+queue exceeds 10"*, where the server recorded only `added role
+queue_coordinator`. The "soft cap" lived entirely in the role's description —
+free text nobody validates — because the ContentPack is data and cannot express
+conditional logic at all.
+
+So the failure mode inverts. The declared-changes check catches a change that
+happened and was not declared. This is a change that was declared and did not
+happen, and it reads *better* than an honest patch, because the prose describes
+the mechanic you wanted.
+
+`docs/grown-tree.md` now prints what the agent declared beside what the server
+recorded, so the gap is visible rather than flattering. Closing it properly
+means either validating descriptions against the schema's expressive power, or
+giving the pack a way to express the mechanics the agent keeps reaching for.
+Neither is built.
+
 ## Earned autonomy
 
 TrueForge stores each agent's approval policy in its manifest and **re-resolves
@@ -151,6 +175,7 @@ silently does nothing.
 | Capability | How |
 | --- | --- |
 | MCP tools | The game is a remote MCP server; 7 tools, annotated so the harness can gate them |
+| Deferred tool loading | Schemas fetched on demand rather than preloaded — the two needed first are named explicitly. Preloading all seven cost enough prompt to breach the gateway's token ceiling |
 | Sandbox | Local provider — skills and the MCP client script mount there, no Daytona key required |
 | Skills | `idle-game-design` sparse-cloned from this repo, loaded on demand |
 | Approval gates | `requireApprovalForTools` on all three mutating tools |
