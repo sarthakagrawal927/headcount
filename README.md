@@ -105,6 +105,8 @@ npx @truefoundry/trueforge@latest # the harness on :8790
 MODEL_FQN=<provider/model> npx tsx src/agent/provision.ts   # create the agent
 npx tsx src/agent/demo.ts                                   # run the design loop
 npx tsx src/agent/demo.ts --approve                         # …and approve at the gate
+npx tsx src/agent/clearance-demo.ts                         # gated → cleared → gated
+npm test                                                    # 17 tests
 ```
 
 Play it at `http://localhost:5173`. Hire past your span of control and watch
@@ -121,6 +123,27 @@ throughput fall. `?cash=400&hire=14` jumps straight to the wall.
 | `src/gateway/`  | OpenAI-compatible shim (see below)                                    |
 | `skills/`       | `SKILL.md` design playbook loaded on demand                           |
 | `docs/`         | Decision log and what we learned about the harness                    |
+
+## What actually happened on real runs
+
+Every control in this project was added because of something the agent did,
+not because of something we imagined it might do. In order:
+
+1. It proposed a supervisor with `answerRate: 0` — one that cannot answer a
+   single question — with a rationale citing attention figures that patch could
+   not produce. → **coherence rules**
+2. It simulated one patch and asked to apply a different one. → the
+   **fingerprint check** named both, exactly.
+3. It simulated a design, received `DEGENERATE-no-wall`, attached that failing
+   verdict as its evidence anyway, and a human approved it. → **the server
+   refused it regardless.**
+4. It asked to apply what it described as *"adds a tier-2 Line Lead role"*. The
+   patch also cut the existing Line Lead from 3.0 answers/sec to 0.3 —
+   crippling the only working supervisor — and zeroed the player's hand-earned
+   income. Neither appeared in its change list. → **declared-changes check.**
+
+None of these are adversarial prompts. They are what a competent model does
+when asked to design something, and every one of them reads well in prose.
 
 ## Qodo Code Review Evidence
 
