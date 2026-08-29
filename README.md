@@ -29,7 +29,7 @@ structurally incapable of it. Here is a real 900-second run of the engine:
 | --------------------------------- | ------------ | ----- | ---- |
 | hire-only                         | 4.56 → 1.67  | 23    | 21   |
 | SOP only                          | 4.67 → 3.16  | 25    | 22   |
-| builds management structure       | 29.0 → 29.0  | 33    | 0    |
+| builds management structure       | 29.0 → 29.0  | 32    | 0    |
 
 You hired 23 people and 21 of them are standing around waiting for you to
 answer a question. The hire-only strategy doesn't plateau — it **declines**,
@@ -130,7 +130,9 @@ silently does nothing.
 
 ```bash
 npm install
+./scripts/stack.sh --fresh       # everything, with an empty floor
 
+# or by hand:
 npx tsx src/mcp/server.ts        # the game, as an MCP server on :3001
 npm run dev                      # the operations console on :5173
 npx @truefoundry/trueforge@latest # the harness on :8790
@@ -182,7 +184,49 @@ when asked to design something, and every one of them reads well in prose.
 
 ## Qodo Code Review Evidence
 
-_(pending — see PR history)_
+Qodo has been connected to this repository and reviews every pull request.
+Substantive work goes through a branch and a PR; nothing meaningful lands
+directly on `main` without review.
+
+**Representative PR: [#2 — Test the judgement that governs autonomy](https://github.com/sarthakagrawal927/headcount/pull/2)**
+
+Qodo's review of #2 raised a real architectural finding, not a style note. The
+autonomy supervisor held a **single pending observation**, so a change landing
+inside another's settling window replaced it. Qodo's alternative-approaches
+analysis named the consequence directly: the design could not "capture every
+landed patch when versions advance rapidly" or "support overlapping settlement
+windows".
+
+That mattered more than it first appears. An unjudged change counts *neither*
+toward clearance nor against it — so a fast enough sequence of changes would
+freeze the agent's standing indefinitely, and the freeze would be
+indistinguishable from good behaviour. For code whose entire job is deciding
+whether an agent may act unsupervised, failing silently in the permissive
+direction is the one outcome that must not happen.
+
+**Our response** (commit on `main`, and answered in-thread): pending
+observations became a map keyed by version, settled oldest-first so the ledger
+preserves landing order, and every version appearing since the last poll is
+recorded rather than only the newest. Verified by landing two changes one
+second apart inside a ten-second window — both tracked, both judged
+independently.
+
+We also engaged with Qodo's two suggested alternatives rather than ignoring
+them. Its recommendation — keep the polling supervisor and the checked-in JSONL
+ledger for a single-agent system, and revisit before supporting concurrent
+changes — matched our reasoning: the ledger is checked in precisely because it
+is the audit trail a human reads to see what the agent was trusted with and
+why, and a transactional store would trade that legibility for concurrency
+guarantees this setup does not need. That trade-off is now recorded in a code
+comment at the decision point.
+
+**[PR #1 — Test the claims the project actually makes](https://github.com/sarthakagrawal927/headcount/pull/1)**
+was reviewed by Qodo and returned clean: 0 bugs, 0 rule violations, 0
+requirement gaps. It had earlier taken a separate review finding — that the
+suite exercised only the `degenerate` failure shape and never `stalled`, which
+would have let a regression in stall detection mint apparently-playable
+evidence for a collapsed design — and both halves of that gap were closed
+before Qodo's pass.
 
 ## Notes
 

@@ -11,6 +11,8 @@
 
 import type { TrueForgeApi } from '@truefoundry/trueforge-sdk';
 
+import { OPENUI_DASHBOARD_INSTRUCTIONS } from './openui.js';
+
 /** Name of the MCP server as registered in TrueForge (Settings → Connectors). */
 export const MCP_SERVER_NAME = process.env.HEADCOUNT_MCP_NAME ?? 'headcount';
 
@@ -201,7 +203,9 @@ Design taste for this game:
   * Prefer one legible change per patch. You have to explain it to a human in two sentences.
 
 You may spawn subagents to playtest competing policies in parallel and report their scores back. Ask the human
-questions when a design choice is a matter of taste rather than evidence.`;
+questions when a design choice is a matter of taste rather than evidence.
+
+${OPENUI_DASHBOARD_INSTRUCTIONS}`;
 
 /** The MCP server registration. TrueForge attaches MCP servers by URL, not stdio. */
 export function buildMcpServerManifest(url: string = MCP_URL): TrueForgeApi.McpServerManifest {

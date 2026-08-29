@@ -16,10 +16,50 @@
 
 import type { ContentPack, GameState } from '../engine/types';
 import { createInitialState, step, unitCost } from '../engine/engine';
-import type { EngineApi } from '../engine/createEngine';
+import type { EngineApi, PatchLogEntry } from '../engine/createEngine';
 
 const BASE = import.meta.env.VITE_GAME_URL ?? 'http://localhost:3001';
 const POLL_MS = 500;
+
+/**
+ * The approval log, held at module scope.
+ *
+ * It rides along on the poll that already runs twice a second — a second
+ * fetcher for the same endpoint would be one more thing to keep in step. The
+ * engine exposes it through `getPatchLog()` for anything holding an engine;
+ * the activity feed subscribes here instead, because it renders beside the
+ * game rather than inside it and never needs the rest of the surface.
+ */
+let patchLog: PatchLogEntry[] = [];
+const listeners = new Set<(log: PatchLogEntry[]) => void>();
+
+export function getPatchLog(): PatchLogEntry[] {
+  return patchLog;
+}
+
+/** Subscribe to approved design changes. Fires immediately with what we have. */
+export function subscribeToPatchLog(fn: (log: PatchLogEntry[]) => void): () => void {
+  listeners.add(fn);
+  fn(patchLog);
+  return () => {
+    listeners.delete(fn);
+  };
+}
+
+/**
+ * Publish only when the log actually grew or a version changed. The poll runs
+ * at 2Hz and the log changes perhaps once a minute; re-rendering the feed on
+ * every poll would restart the arrival highlight over and over.
+ */
+function setPatchLog(next: PatchLogEntry[] | undefined): void {
+  if (!Array.isArray(next)) return;
+  const unchanged =
+    next.length === patchLog.length &&
+    next.every((entry, i) => entry.version === patchLog[i]?.version && entry.at === patchLog[i]?.at);
+  if (unchanged) return;
+  patchLog = next;
+  for (const fn of listeners) fn(patchLog);
+}
 
 export function createRemoteEngine(seed: ContentPack): EngineApi {
   let pack = seed;
@@ -30,9 +70,14 @@ export function createRemoteEngine(seed: ContentPack): EngineApi {
     try {
       const res = await fetch(`${BASE}/game`);
       if (!res.ok) throw new Error(String(res.status));
-      const data = (await res.json()) as { state: GameState; pack: ContentPack };
+      const data = (await res.json()) as {
+        state: GameState;
+        pack: ContentPack;
+        patchLog?: PatchLogEntry[];
+      };
       if (data.pack) pack = data.pack;
       if (data.state) state = data.state;
+      setPatchLog(data.patchLog);
       connected = true;
     } catch {
       // The server may not be up yet, or may be restarting after a patch.
@@ -68,6 +113,8 @@ export function createRemoteEngine(seed: ContentPack): EngineApi {
     },
 
     getState: () => state,
+
+    getPatchLog: () => patchLog,
 
     tick(dt) {
       // Local interpolation only. The next poll overwrites this.
