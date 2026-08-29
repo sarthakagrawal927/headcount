@@ -109,50 +109,71 @@ async function main(): Promise<void> {
   console.log(dim(`supervisor watching ${GAME_URL} — ${CLEARANCE_THRESHOLD} clean changes earns ${EARNABLE}\n`));
 
   const seen = new Set(readLedger().map((o) => o.version));
-  let pending: { version: number; before: Metrics; deadline: number } | null = null;
-  let last = await readGame();
+
+  /**
+   * Observations still inside their settling window, keyed by version.
+   *
+   * A map rather than a single slot: changes can land faster than they settle,
+   * and holding only the newest would leave earlier ones permanently unjudged.
+   * That is worse than it sounds — an unjudged change counts neither toward
+   * clearance nor against it, so a fast enough sequence would freeze the
+   * agent's standing entirely.
+   */
+  const pending = new Map<number, { before: Metrics; deadline: number }>();
+  let last: GameView | null = await readGame();
 
   for (;;) {
     await new Promise((r) => setTimeout(r, POLL_MS));
     const now = await readGame();
     if (!now) continue;
 
-    // A settled change can be judged.
-    if (pending && now.metrics && Date.now() >= pending.deadline) {
-      const verdict = judge(pending.before, now.metrics);
-      settle(pending.version, now.metrics, verdict.regression, verdict.reason);
+    // Judge everything whose window has closed. Oldest first, so the ledger
+    // stays in the order changes actually landed.
+    let settledAny = false;
+    for (const [version, obs] of [...pending.entries()].sort((a, b) => a[0] - b[0])) {
+      if (Date.now() < obs.deadline) continue;
+      const verdict = judge(obs.before, now.metrics);
+      settle(version, now.metrics, verdict.regression, verdict.reason);
       console.log(
-        `  v${pending.version} ${verdict.regression ? bold('REGRESSION') : 'held'} — ${verdict.reason}`,
+        `  v${version} ${verdict.regression ? bold('REGRESSION') : 'held'} — ${verdict.reason}`,
       );
-      pending = null;
-      await reconcile();
+      pending.delete(version);
+      settledAny = true;
     }
+    if (settledAny) await reconcile();
 
-    // A new change has landed.
-    if (last && now.version > last.version && !seen.has(now.version)) {
-      const entry = now.patchLog.find((p) => p.version === now.version);
-      const outcome: Outcome = {
-        version: now.version,
-        at: entry?.at ?? 0,
-        recordedAt: new Date().toISOString(),
-        summary: entry?.summary ?? [],
-        note: entry?.note ?? '',
-        before: last.metrics,
-        after: null,
-        regression: null,
-        reason: null,
-      };
-      append(outcome);
-      seen.add(now.version);
-      console.log(
-        `\n  v${now.version} landed — ${outcome.summary.join('; ') || 'no summary'}` +
-          dim(`\n  watching for ${SETTLE_SECONDS}s before judging it`),
-      );
-      pending = {
-        version: now.version,
-        before: last.metrics,
-        deadline: Date.now() + SETTLE_SECONDS * 1000,
-      };
+    // Record every change that landed since the last poll, not only the newest.
+    // Several can arrive inside one interval, and a change nobody recorded is a
+    // change nobody can hold the agent to.
+    const previous = last;
+    if (previous) {
+      const landed = now.patchLog
+        .filter((p) => p.version > previous.version && !seen.has(p.version))
+        .sort((a, b) => a.version - b.version);
+
+      for (const entry of landed) {
+        const outcome: Outcome = {
+          version: entry.version,
+          at: entry.at ?? 0,
+          recordedAt: new Date().toISOString(),
+          summary: entry.summary ?? [],
+          note: entry.note ?? '',
+          before: previous.metrics,
+          after: null,
+          regression: null,
+          reason: null,
+        };
+        append(outcome);
+        seen.add(entry.version);
+        console.log(
+          `\n  v${entry.version} landed — ${outcome.summary.join('; ') || 'no summary'}` +
+            dim(`\n  watching for ${SETTLE_SECONDS}s before judging it`),
+        );
+        pending.set(entry.version, {
+          before: previous.metrics,
+          deadline: Date.now() + SETTLE_SECONDS * 1000,
+        });
+      }
     }
 
     last = now;

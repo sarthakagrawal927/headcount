@@ -279,6 +279,49 @@ function coherenceErrors(pack: ContentPack): string[] {
   return problems;
 }
 
+/**
+ * One legible change per patch.
+ *
+ * The design skill asks for this and the agent kept ignoring it, bundling a
+ * new supervisor together with zeroed click revenue and a rewritten tenure
+ * ladder. Every such patch was honestly *declared* — the declaration check
+ * saw to that — but a human reading six unrelated bullet points cannot weigh
+ * them, and a mechanic whose effect is entangled with three others cannot be
+ * evaluated by simulation either.
+ *
+ * Breadth is counted in categories rather than lines, so adding one role with
+ * its accompanying SOP stays legal while a role plus economy-wide rebalancing
+ * does not.
+ */
+function breadthErrors(summary: string[]): string[] {
+  if (summary.length === 0) return [];
+
+  const categories = new Set<string>();
+  for (const change of summary) {
+    if (/^(playerAnswerRate|clickRevenue|incidentThreshold|spanOfControl|coordinationPenalty):/.test(change)) {
+      categories.add('global economy');
+    } else if (/^added role|^removed role/.test(change)) {
+      categories.add('roles added or removed');
+    } else if (/^role /.test(change)) {
+      categories.add('existing roles retuned');
+    } else if (/SOP/.test(change)) {
+      categories.add('procedures');
+    } else if (/tenure ladder/.test(change)) {
+      categories.add('tenure ladder');
+    } else {
+      categories.add('other');
+    }
+  }
+
+  if (categories.size <= 2) return [];
+
+  return [
+    `This patch changes ${categories.size} unrelated things at once (${[...categories].join(', ')}). ` +
+      'Split it: propose one mechanic, simulate it, and let a human weigh it on its own. A change ' +
+      'entangled with three others cannot be evaluated by them or by the simulator.',
+  ];
+}
+
 export function applyPatchToPack(
   pack: ContentPack,
   patch: ContentPatch,
@@ -375,6 +418,7 @@ export function applyPatchToPack(
 
   next.version = pack.version + 1;
   errors.push(...coherenceErrors(next));
+  errors.push(...breadthErrors(summary));
 
   return { pack: next, summary, errors };
 }

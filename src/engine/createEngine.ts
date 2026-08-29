@@ -13,10 +13,37 @@ import { createInitialState, manualWork, step, unitCost } from './engine.js';
 import { buySop, grantTenure as grantTenureAction, hire as hireAction } from './actions.js';
 import { SEED_PACK } from './content.js';
 
+/**
+ * One approved design change, as the live game recorded it.
+ *
+ * Mirrors `PatchLogEntry` in src/mcp/gameStore.ts. It is restated here rather
+ * than imported so nothing in the UI bundle reaches into the MCP server, and so
+ * a local in-browser engine — which has no agent and therefore no patch log —
+ * need not know the type exists at all.
+ */
+export interface PatchLogEntry {
+  /** In-game seconds when the patch landed. */
+  at: number;
+  /** The agent's rationale, as shown to the human who approved it. */
+  note?: string;
+  /** What the patch actually did, computed by the server rather than claimed. */
+  summary: string[];
+  /** Content pack version after the patch. */
+  version: number;
+}
+
 export interface EngineApi {
   readonly content: ContentPack;
   getState(): GameState;
   tick(dt: number): Telemetry;
+  /**
+   * Design changes an agent has had approved into this game, oldest first.
+   *
+   * Optional on purpose: only an engine attached to the shared live game has a
+   * patch log to report. The local engine simply does not implement it, and the
+   * console renders an empty feed rather than a broken one.
+   */
+  getPatchLog?(): PatchLogEntry[];
   work(): void;
   answer(count?: number): number;
   hire(roleId: string): boolean;

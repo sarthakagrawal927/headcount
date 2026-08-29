@@ -10,6 +10,8 @@
     "mcp": "tsx src/mcp/server.ts",
     "sim": "tsx src/engine/cli.ts",
     "agent": "tsx src/agent/provision.ts",
+    "stack": "./scripts/stack.sh",
+    "supervisor": "tsx src/agent/autonomy.ts",
     "test": "node --import tsx --test test/*.test.ts"
   },
   "dependencies": {

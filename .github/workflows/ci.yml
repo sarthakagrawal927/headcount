@@ -1,0 +1,56 @@
+# Catches the failure that actually happened: a file reaching main while the
+# module it imports did not, so a fresh clone would not typecheck. Everything
+# here runs against a clean checkout, because that is the only state anyone
+# evaluating this repository will ever see.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npx tsc -b
+
+      - name: Build
+        run: npx vite build
+
+      - name: Tests
+        # The suite lives on a branch until it merges; do not fail main for it.
+        run: |
+          if node -e "process.exit(require('./package.json').scripts.test ? 0 : 1)"; then
+            npm test
+          else
+            echo "no test script on this ref — skipping"
+          fi
+
+      - name: The economy still behaves as the README claims
+        # A cheap guard on the project's central claim: a hire-only strategy
+        # must decline from its own peak rather than plateau. If someone tunes
+        # that away, the README becomes false and this says so.
+        run: |
+          npx tsx src/engine/cli.ts | tee /tmp/sim.txt
+          node -e "
+            const t = require('fs').readFileSync('/tmp/sim.txt','utf8');
+            const row = t.split('\n').find(l => l.includes('headcount-rush'));
+            if (!row) { console.error('could not find the hire-only row'); process.exit(1); }
+            const [peak, final] = row.match(/\d+\.\d+/g).map(Number);
+            if (!(final < peak * 0.75)) {
+              console.error(\`hire-only should decline: peak \${peak}, final \${final}\`);
+              process.exit(1);
+            }
+            console.log(\`ok — hire-only declines \${peak} -> \${final}\`);
+          "
