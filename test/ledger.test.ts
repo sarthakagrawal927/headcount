@@ -11,7 +11,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { judge, standing, type Metrics, type Outcome } from '../src/agent/ledger.js';
+import { entryKey, judge, standing, type Metrics, type Outcome } from '../src/agent/ledger.js';
 
 const healthy: Metrics = {
   throughput: 4.0,
@@ -19,8 +19,9 @@ const healthy: Metrics = {
   blockedFraction: 0.3,
 };
 
-function outcome(version: number, regression: boolean | null): Outcome {
+function outcome(version: number, regression: boolean | null, bootId = 'run-a'): Outcome {
   return {
+    bootId,
     version,
     at: version * 10,
     recordedAt: new Date(version * 1000).toISOString(),
@@ -105,5 +106,41 @@ describe('standing', () => {
     const s = standing([]);
     assert.equal(s.cleanStreak, 0);
     assert.equal(s.lastRegressionAt, null);
+  });
+});
+
+describe('a shipped change is identified by its run, not its version', () => {
+  it('separates the same version number across two runs', () => {
+    // Pack versions restart at 1 whenever the game process does, so v2 today
+    // and v2 after a restart are different events. Treating them as one meant
+    // a fresh run's first changes were skipped as already-seen — supervision
+    // suspended exactly when nobody was watching.
+    assert.notEqual(
+      entryKey({ bootId: 'run-a', version: 2 }),
+      entryKey({ bootId: 'run-b', version: 2 }),
+    );
+  });
+
+  it('is stable for the same change', () => {
+    assert.equal(
+      entryKey({ bootId: 'run-a', version: 2 }),
+      entryKey({ bootId: 'run-a', version: 2 }),
+    );
+  });
+
+  it('gives entries written before boot ids their own identity', () => {
+    // Older entries have no boot id. They must not collide with a live run's
+    // versions, or the first changes after an upgrade go unjudged.
+    assert.notEqual(entryKey({ version: 2 }), entryKey({ bootId: 'run-a', version: 2 }));
+  });
+
+  it('counts a clean streak within one run, not across a restart boundary', () => {
+    const s = standing([
+      outcome(2, false, 'run-a'),
+      outcome(3, false, 'run-a'),
+      outcome(2, true, 'run-b'),
+    ]);
+    assert.equal(s.cleanStreak, 0, 'the newest entry is a regression, whichever run it came from');
+    assert.equal(s.shipped, 3);
   });
 });
