@@ -211,6 +211,10 @@ export function buildMcpServerManifest(url: string = MCP_URL): TrueForgeApi.McpS
 }
 
 export interface ManifestOptions {
+  /** Let the agent ask clarifying questions. Off for focused demos. */
+  askUserQuestions?: boolean;
+  /** Let the harness fan out to subagents. */
+  dynamicSubAgents?: boolean;
   /** Model FQN, `provider/model`. */
   model?: string;
   /** MCP server name to attach. */
@@ -236,6 +240,8 @@ export function buildAgentManifest(options: ManifestOptions = {}): TrueForgeApi.
     requireApprovalForTools = [...MUTATING_TOOLS],
     iterationLimit = 40,
     instructions = INSTRUCTIONS,
+    askUserQuestions = true,
+    dynamicSubAgents = true,
   } = options;
 
   return {
@@ -253,9 +259,10 @@ export function buildAgentManifest(options: ManifestOptions = {}): TrueForgeApi.
     ],
     config: {
       // Playtesting competing policies is embarrassingly parallel.
-      dynamicSubAgents: { enabled: true },
-      // Design taste is a question for a human, not a thing to guess.
-      askUserQuestions: { enabled: true },
+      dynamicSubAgents: { enabled: dynamicSubAgents },
+      // Design taste is a question for a human, not a thing to guess. Turned
+      // off for focused demonstrations where a clarifying question is noise.
+      askUserQuestions: { enabled: askUserQuestions },
       // Telemetry deserves a chart, not a paragraph.
       generativeUi: { enabled: true },
       iterationLimit,
