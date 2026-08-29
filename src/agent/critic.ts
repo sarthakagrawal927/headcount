@@ -696,24 +696,41 @@ export interface ConveneOptions extends RunOptions {
  * being altered — rather than on wording, which no two sentences share.
  */
 export function undeclaredEffects(proposal: Proposal): string[] {
-  // Identifiers are snake_case and prose is not: a change to `line_lead` gets
-  // declared as "the Line Lead". Comparing them literally marks correct
-  // declarations as undeclared, which is a false accusation from a check whose
-  // entire job is catching dishonesty.
-  const flatten = (t: string) => t.toLowerCase().replace(/[_\-\s]+/g, ' ').trim();
+  // Identifiers are snake_case or camelCase and prose is neither: `line_lead`
+  // is declared as "the Line Lead", `answerRate` as "answer rate". Flatten both
+  // sides, or a correct declaration reads as incomplete.
+  const flatten = (t: string) =>
+    t
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .toLowerCase()
+      .replace(/[_\-\s]+/g, ' ')
+      .trim();
   const declared = proposal.declaredChanges.map(flatten);
-  return proposal.actualEffects.filter((effect) => {
-    const scalar = /^([A-Za-z]+):/.exec(effect);
-    const entity = /\b(role|SOP)\s+([A-Za-z0-9_.-]+)/i.exec(effect);
-    const subject = scalar
-      ? scalar[1].toLowerCase()
-      : entity
-        ? entity[2].toLowerCase()
-        : /tenure ladder/i.test(effect)
-          ? 'tenure'
-          : effect.toLowerCase().slice(0, 12);
-    return !declared.some((d) => d.includes(flatten(subject)));
-  });
+
+  // Naming the entity is not enough. "Tweaks the riveter cost curve" once
+  // satisfied an effect that changed throughput and answer rate, because only
+  // the role name was required — so a patch could move three numbers while
+  // admitting to one.
+  const required = (change: string): string[] => {
+    const scalar = /^([A-Za-z]+):/.exec(change);
+    if (scalar) return [scalar[1]];
+
+    const entity = /\b(role|SOP)\s+([A-Za-z0-9_.-]+):\s*(.*)$/i.exec(change);
+    if (entity) {
+      const [, , name, rest] = entity;
+      const fields = [...rest.matchAll(/([A-Za-z][A-Za-z0-9]*)\s+[^,]*->/g)].map((m) => m[1]);
+      return [name, ...fields];
+    }
+
+    const added = /\b(role|SOP)\s+([A-Za-z0-9_.-]+)/i.exec(change);
+    if (added) return [added[2]];
+    if (/tenure ladder/i.test(change)) return ['tenure'];
+    return [change.slice(0, 12)];
+  };
+
+  return proposal.actualEffects.filter((effect) =>
+    required(effect).some((token) => !declared.some((d) => d.includes(flatten(token)))),
+  );
 }
 
 /**

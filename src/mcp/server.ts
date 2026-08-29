@@ -286,10 +286,14 @@ function buildServer(): McpServer {
       // checking it against the real summary puts the changes back in front of
       // them — and catches the specific failure this was written for: a patch
       // that quietly zeroed click revenue while arguing about supervisors.
-      const undeclared = summary.filter((change) => {
-        const subject = declarationKey(change);
-        return !changes.some((d) => mentions(d, subject));
-      });
+      // Every token must appear somewhere in the change list — the entity and
+      // each field it moved. A patch may not admit to one number and quietly
+      // move three.
+      const undeclared = summary.filter((change) =>
+        requiredMentions(change).some(
+          (token) => !changes.some((d) => mentions(d, token)),
+        ),
+      );
       if (undeclared.length) {
         return fail('Patch refused: the change list is incomplete. The live game is unchanged.', {
           undeclared,
@@ -416,26 +420,51 @@ function buildServer(): McpServer {
  * subject is the field or entity being changed.
  */
 /**
- * Does a plain-English declaration mention this subject?
+ * Everything a declaration must mention for a recorded effect to count as
+ * declared.
  *
- * Identifiers are snake_case and prose is not: a change to `line_lead`
- * is declared as "the Line Lead". Comparing them literally marked correct
- * declarations as incomplete and refused honest patches — a false accusation,
- * which is the worst failure available to a check whose whole job is catching
- * dishonesty. Separators are flattened on both sides before comparing.
+ * Naming the entity is not enough. "Tweaks the riveter cost curve" once
+ * satisfied an effect that actually changed throughput *and* answer rate,
+ * because only the role name was required — so a patch could move three
+ * numbers while admitting to one. Each changed field is now required too.
  */
-function mentions(declaration: string, subject: string): boolean {
-  const flatten = (t: string) => t.toLowerCase().replace(/[_\-\s]+/g, ' ').trim();
-  return flatten(declaration).includes(flatten(subject));
+function requiredMentions(change: string): string[] {
+  const scalar = /^([A-Za-z]+):/.exec(change);
+  if (scalar) return [scalar[1]];
+
+  const entity = /\b(role|SOP)\s+([A-Za-z0-9_.-]+):\s*(.*)$/i.exec(change);
+  if (entity) {
+    const [, , name, rest] = entity;
+    // "throughput 1 -> 1.3, answerRate 3 -> 0.5" — every field named here is
+    // part of what the human is being asked to approve.
+    const fields = [...rest.matchAll(/([A-Za-z][A-Za-z0-9]*)\s+[^,]*->/g)].map((m) => m[1]);
+    return [name, ...fields];
+  }
+
+  const added = /\b(role|SOP)\s+([A-Za-z0-9_.-]+)/i.exec(change);
+  if (added) return [added[2]];
+
+  if (/tenure ladder/i.test(change)) return ['tenure'];
+  return [change.slice(0, 12)];
 }
 
-function declarationKey(change: string): string {
-  const scalar = /^([A-Za-z]+):/.exec(change);
-  if (scalar) return scalar[1].toLowerCase();
-  const entity = /\b(role|SOP)\s+([A-Za-z0-9_.-]+)/i.exec(change);
-  if (entity) return entity[2].toLowerCase();
-  if (/tenure ladder/i.test(change)) return 'tenure';
-  return change.toLowerCase().slice(0, 12);
+/**
+ * Does a declaration mention this token?
+ *
+ * Identifiers are snake_case or camelCase and prose is neither: `line_lead`
+ * gets declared as "the Line Lead", `answerRate` as "answer rate". Both sides
+ * are flattened to spaced lower case before comparing, or correct declarations
+ * read as incomplete — a false accusation from a check whose job is catching
+ * dishonesty.
+ */
+function mentions(declaration: string, token: string): boolean {
+  const flatten = (t: string) =>
+    t
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .toLowerCase()
+      .replace(/[_\-\s]+/g, ' ')
+      .trim();
+  return flatten(declaration).includes(flatten(token));
 }
 
 const app = express();
