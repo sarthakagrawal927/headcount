@@ -416,6 +416,67 @@ app.get('/game', async (_req, res) => {
   }
 });
 
+/**
+ * Player actions from the operations console.
+ *
+ * The console and the agent act on the *same* running company — that is the
+ * whole point of the piece. The player hires and answers questions here; the
+ * agent redesigns the rules underneath them through MCP. Neither is a view of
+ * a private copy.
+ */
+app.post('/game/action', async (req, res) => {
+  try {
+    const game = await getGame();
+    const { type, id, count } = req.body ?? {};
+
+    switch (type) {
+      case 'work':
+        // The opening beat of the genre: you, alone, doing the job by hand.
+        // No question is raised, because you never have to ask yourself.
+        game.state = {
+          ...game.state,
+          cash: game.state.cash + game.pack.clickRevenue,
+          lifetimeCash: game.state.lifetimeCash + game.pack.clickRevenue,
+          tasksCompleted: game.state.tasksCompleted + 1,
+        };
+        break;
+      case 'answer': {
+        const n = Math.min(Number(count ?? 1), game.state.queue);
+        game.state = {
+          ...game.state,
+          queue: game.state.queue - n,
+          answered: game.state.answered + n,
+        };
+        break;
+      }
+      case 'hire':
+      case 'sop':
+      case 'tenure': {
+        const action =
+          type === 'hire'
+            ? game.engine.hire
+            : type === 'sop'
+              ? game.engine.buySop
+              : game.engine.grantTenure;
+        const result = action(game.state, game.pack, String(id));
+        if (!result.ok) {
+          res.status(409).json({ ok: false, reason: result.reason });
+          return;
+        }
+        game.state = result.state;
+        break;
+      }
+      default:
+        res.status(400).json({ ok: false, reason: `unknown action "${type}"` });
+        return;
+    }
+
+    res.json({ ok: true, state: game.state, derived: derive(game) });
+  } catch (err) {
+    res.status(503).json({ ok: false, reason: (err as Error).message });
+  }
+});
+
 async function main() {
   // Fail loudly at boot if the engine is missing, rather than on first tool call.
   const engine = await loadEngine();

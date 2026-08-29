@@ -21,7 +21,21 @@ import type { ContentPack, GameState, Telemetry } from '../engine/types';
 import { DEFAULT_PACK, QUESTION_BANK } from './content';
 
 // ---------------------------------------------------------------- SEAM (1/1)
-import { createEngine } from '../engine/createEngine';
+import { createEngine as createLocalEngine } from '../engine/createEngine';
+import { createRemoteEngine } from './remoteEngine';
+
+/**
+ * By default the console attaches to the shared company running in the MCP
+ * server, so the player and the agent act on the same game. `?local=1` runs a
+ * private in-browser company instead, which is useful when the server is not
+ * running and for testing the engine in isolation.
+ */
+function createEngine(pack: ContentPack) {
+  const local =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('local') === '1';
+  return local ? createLocalEngine(pack) : createRemoteEngine(pack);
+}
 // ---------------------------------------------------------------------------
 
 /** The surface the UI needs from any engine implementation. */
@@ -204,10 +218,9 @@ export function useGame(pack: ContentPack = DEFAULT_PACK) {
     applyDevSeed(e);
     return e;
   }, [pack]);
-  const roleName = useMemo(
-    () => new Map(pack.roles.map((r) => [r.id, r.name] as const)),
-    [pack],
-  );
+  // Role metadata is read off the engine, not the seed pack. When the agent's
+  // patch is approved the live pack changes mid-shift and the console has to
+  // follow it — otherwise it renders a company that no longer exists.
 
   const emptyTelemetry: Telemetry = {
     t: 0,
@@ -232,7 +245,7 @@ export function useGame(pack: ContentPack = DEFAULT_PACK) {
 
   const [running, setRunning] = useState(true);
   const [snapshot, setSnapshot] = useState<GameSnapshot>(() => ({
-    content: pack,
+    content: engine.content,
     state: cloneState(engine.getState()),
     telemetry: emptyTelemetry,
     history: [],
@@ -265,8 +278,10 @@ export function useGame(pack: ContentPack = DEFAULT_PACK) {
       if (list.length === target) return;
 
       // Weight who is asking by who is actually hired.
-      const askers = pack.roles.filter((r) => r.tier === 1 && (state.headcount[r.id] ?? 0) > 0);
-      const pool = askers.length > 0 ? askers : pack.roles.filter((r) => r.tier === 1);
+      const live = engine.content;
+      const names = new Map(live.roles.map((r) => [r.id, r.name] as const));
+      const askers = live.roles.filter((r) => r.tier === 1 && (state.headcount[r.id] ?? 0) > 0);
+      const pool = askers.length > 0 ? askers : live.roles.filter((r) => r.tier === 1);
       const weightTotal = pool.reduce((s, r) => s + Math.max(1, state.headcount[r.id] ?? 0), 0);
 
       const added: Question[] = [];
@@ -291,7 +306,7 @@ export function useGame(pack: ContentPack = DEFAULT_PACK) {
         added.push({
           id: nextId.current++,
           roleId: role.id,
-          roleName: roleName.get(role.id) ?? role.name,
+          roleName: names.get(role.id) ?? role.name,
           where: q.where,
           text: q.text,
           raisedAt: state.t,
@@ -299,7 +314,7 @@ export function useGame(pack: ContentPack = DEFAULT_PACK) {
       }
       questionsRef.current = [...list, ...added];
     },
-    [pack, roleName],
+    [engine],
   );
 
   const publish = useCallback(
@@ -313,9 +328,9 @@ export function useGame(pack: ContentPack = DEFAULT_PACK) {
         pushLog('incident', 'INCIDENT — defect review. Tenure clawed back one rung, floor-wide.');
       }
 
-      const load = telemetry.escalationRate / Math.max(0.0001, pack.playerAnswerRate);
+      const load = telemetry.escalationRate / Math.max(0.0001, engine.content.playerAnswerRate);
       setSnapshot({
-        content: pack,
+        content: engine.content,
         state: cloneState(state),
         telemetry,
         history: historyRef.current,
