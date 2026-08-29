@@ -166,6 +166,15 @@ async function main(): Promise<number> {
   log('approval gate:', gate.length ? gate.join(', ') : '(none — the agent acts unattended)');
   log('unattended   :', READ_ONLY_TOOLS.join(', '));
   log('');
+  // Provisioning rewrites the manifest wholesale, which returns the agent to
+  // the default gate and discards whatever standing the supervisor recorded.
+  // That is the right default — a redeploy should not inherit trust an earlier
+  // build earned — but losing autonomy silently looks exactly like never
+  // having had it, so it gets said out loud.
+  log('');
+  log('This reset earned clearance to the default gate. The supervisor');
+  log('(src/agent/autonomy.ts) will earn it back from zero.');
+  log('');
   log('Widen or narrow that gate at runtime without touching this file:');
   log('  import { grantClearance, revokeClearance } from "./src/agent/trust.js"');
   log('Open sessions ONLY via src/agent/session.ts — it binds by agent NAME. A session created with an');
