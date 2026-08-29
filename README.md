@@ -175,6 +175,7 @@ silently does nothing.
 | Capability | How |
 | --- | --- |
 | MCP tools | The game is a remote MCP server; 7 tools, annotated so the harness can gate them |
+| Deferred tool loading | Schemas fetched on demand rather than preloaded — the two needed first are named explicitly. Preloading all seven cost enough prompt to breach the gateway's token ceiling |
 | Sandbox | Local provider — skills and the MCP client script mount there, no Daytona key required |
 | Skills | `idle-game-design` sparse-cloned from this repo, loaded on demand |
 | Approval gates | `requireApprovalForTools` on all three mutating tools |
