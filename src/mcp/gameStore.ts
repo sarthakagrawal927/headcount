@@ -344,6 +344,14 @@ function breadthErrors(summary: string[]): string[] {
   ];
 }
 
+/** Render a patch value for a human reading a change summary. */
+function render(v: unknown): string {
+  if (v === undefined) return 'unset';
+  if (v === null) return 'null';
+  if (typeof v === 'object') return JSON.stringify(v);
+  return String(v);
+}
+
 export function applyPatchToPack(
   pack: ContentPack,
   patch: ContentPatch,
@@ -377,7 +385,10 @@ export function applyPatchToPack(
     if (existing) {
       const changed = Object.entries(patchRole)
         .filter(([k, v]) => k !== 'id' && v !== undefined && (existing as any)[k] !== v)
-        .map(([k, v]) => `${k} ${(existing as any)[k]} -> ${v}`);
+        // Nested values must be rendered, not coerced: a summary reading
+        // "softCap undefined -> [object Object]" tells the approving human
+        // nothing about what they are approving.
+        .map(([k, v]) => `${k} ${render((existing as any)[k])} -> ${render(v)}`);
       Object.assign(existing, Object.fromEntries(Object.entries(patchRole).filter(([, v]) => v !== undefined)));
       if (changed.length) summary.push(`role ${patchRole.id}: ${changed.join(', ')}`);
     } else {

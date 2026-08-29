@@ -97,8 +97,12 @@ literally, verified against the harness before the panel will convene) and fail
 closed: an unparseable verdict counts as a refutation. A majority blocks the
 proposal from ever being shown.
 
-On the patch that zeroed the player's income while claiming to add a
-supervisor, all three refuted it and two named the hidden effect outright. The
+It runs on the real path, not in a test. On a live proposal claiming to add a
+Line Lead, all three refuted it independently and for different reasons: the
+declared `escalateFraction` was 0.15 while the patch set 0.5; throughput fell
+4.21 → 4.07; and the role already existed, differing only in cost and
+description. `BLOCKED — 3 of 3 critics refuted this proposal. It is not going
+to a human.` The
 panel's value is clearest on a proposal whose changes are *fully declared* and
 still harmful — the server's declaration check cannot fire there, and only a
 reader catches it.

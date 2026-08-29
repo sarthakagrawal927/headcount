@@ -94,7 +94,10 @@ you are attempting, and say so:
   threshold (autonomy that reduces output above some error rate; a supervisor
   who becomes a bottleneck when overloaded).
 - **Soft cap** — diminishing returns that make a previously dominant strategy
-  merely good, retiring it without removing it.
+  merely good, retiring it without removing it. Build it with a role's
+  `softCap` field (`when`, `threshold`, `throughputMultiplier`). Writing a cap
+  into a role's description does nothing at all: the blurb is free text, the
+  engine never reads it, and the mechanic exists only in the sentence.
 - **Sink for an accumulating currency** — the game only ever adds; give it
   somewhere to spend.
 - **Subgame with different physics** — a bounded system obeying its own rules
@@ -131,3 +134,15 @@ a designer would, not the way an advocate would:
   strategy you had in mind is a change that punishes everyone else.
 
 If the numbers disagree with your intention, report the numbers.
+
+## What the pack can and cannot express
+
+The ContentPack is data. It can express roles and their rates, procedures that
+reduce confusion, tenure rungs, cost curves, span-of-control pressure and soft
+caps. It cannot express conditional logic of any other kind.
+
+So before proposing a mechanic, check that a field exists for it. If one does
+not, say so plainly and propose the nearest thing the pack *can* do. Describing
+the mechanic you wanted in a role's blurb is the one failure mode that looks
+like success: the text reads well, a human approves it, the server records
+something else entirely, and the game does not change.
