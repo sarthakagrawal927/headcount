@@ -80,3 +80,14 @@ describe('verification', () => {
     assert.equal(token.split('.').length, 4, `unparseable token: ${token}`);
   });
 });
+
+describe('stalled designs cannot be applied either', () => {
+  it('refuses a token whose verdict was stalled', () => {
+    // Without this, a regression in stall detection would let simulate_patch
+    // mint apparently-playable evidence for a design whose floor collapsed.
+    const token = mint(PATCH, { ...GOOD, stalled: true });
+    const check = verify(token, PATCH);
+    assert.ok(!check.ok);
+    assert.match(check.reason, /STALLED/);
+  });
+});

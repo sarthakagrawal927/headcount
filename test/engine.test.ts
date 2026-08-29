@@ -124,3 +124,29 @@ describe('scoring reports failure shapes, not a single number', () => {
     assert.ok(score.degenerate, 'a pack with no attention pressure should be degenerate');
   });
 });
+
+describe('the stalled failure shape', () => {
+  it('flags a design whose throughput collapses and never recovers', () => {
+    // A punishing span of control: two reports per manager, and a steep
+    // penalty past it. Hiring then drives confusion up faster than the extra
+    // hands can produce, so the floor peaks early and falls away.
+    const brittle = {
+      ...SEED_PACK,
+      spanOfControl: 2,
+      coordinationPenalty: 4,
+    };
+    const policy: PlayPolicy = {
+      mode: 'scripted',
+      label: 'hire-only',
+      script: [{ type: 'hire', roleId: 'riveter', upTo: 80 }],
+    };
+
+    const { score } = simulate(brittle, policy, 900);
+    assert.ok(
+      score.stalled,
+      `expected a stall; peak ${score.peakThroughput.toFixed(2)}, ` +
+        `final ${score.finalThroughput.toFixed(2)}`,
+    );
+    assert.ok(!score.degenerate, 'a stalled run is not also degenerate');
+  });
+});
