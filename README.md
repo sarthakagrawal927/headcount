@@ -22,6 +22,12 @@ simulation and ask a human before it can touch anything.
 answer a question — and `Quality Inspector`, in the hire panel, is a role an
 agent designed, proved in simulation and asked permission to add.*
 
+> **The result we'd point a judge at.** The agent once shipped a change that
+> passed simulation, passed evidence binding, and applied with **no human
+> involved at all** — because it had earned that autonomy. Throughput on the
+> real floor then fell by two thirds, and its clearance was revoked
+> automatically. Simulation was not sufficient. → [Earned autonomy](#earned-autonomy)
+
 ## The one equation
 
 ```
@@ -247,3 +253,15 @@ See [docs/harness-findings.md](docs/harness-findings.md) for what we learned
 about TrueForge, including several places the documentation and the shipped code
 disagree, and [docs/decision-log.md](docs/decision-log.md) for why the design is
 shaped this way.
+
+## Documentation
+
+| | |
+| --- | --- |
+| [architecture.md](docs/architecture.md) | The four processes, and why every control sits on the far side of the MCP boundary |
+| [decision-log.md](docs/decision-log.md) | Why the design is shaped this way, written during the build |
+| [harness-findings.md](docs/harness-findings.md) | What we learned about TrueForge, including where the docs and the code disagree |
+| [grown-tree.md](docs/grown-tree.md) | The generated record of mechanics the agent designed — the run, not a description of it |
+| [generative-ui.md](docs/generative-ui.md) | The OpenUI grammar as shipped, and the `Query()` trap |
+| [demo-script.md](docs/demo-script.md) | Three minutes, beat by beat |
+| [blog.md](docs/blog.md) | The write-up |
