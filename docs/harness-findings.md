@@ -96,3 +96,25 @@ about 35. The notable omission is `Query("tool", {args}, {defaults}, interval)`,
 which lets a rendered dashboard poll MCP tools and re-render on a timer. It
 works, but the model has never seen the syntax, so using it means pasting the
 grammar into the agent's instructions yourself.
+
+## Tool calls arrive wrapped, and the wrapper hides the name
+
+With deferred tool loading the agent does not call `simulate_patch` directly —
+it calls the harness's `call_tool` with `{mcp_server, tool_name, input}`, and
+the response nests under `content[0].text`. Anything watching the stream for a
+tool by name sees eight calls and none of them the one it wanted. Unwrap both
+directions before matching.
+
+## "Is this tool gated?" is a question with a time-varying answer
+
+Because the manifest is re-resolved every turn, clearance can change *during* a
+session. We spent real time chasing a phantom: a run made two `apply_patch`
+calls and the harness emitted no approval event, while reading the manifest
+afterwards showed the tool gated. Both observations were true. A supervisor
+process had granted clearance before the run and revoked it after, on evidence
+of a regression.
+
+Nothing was broken, but the debugging lesson is real: with runtime-mutable
+permissions, reading the current policy tells you nothing about the policy a
+past turn executed under. Log the gate as it was at the time, or you will
+diagnose the wrong thing.
