@@ -20,7 +20,7 @@
  *   npx tsx src/agent/autonomy.ts --once   # evaluate standing and exit
  */
 
-import { append, judge, readLedger, settle, standing, type Metrics, type Outcome } from './ledger.js';
+import { append, entryKey, judge, readLedger, settle, standing, type Metrics, type Outcome } from './ledger.js';
 import { grantClearance, readClearance, revokeClearance } from './trust.js';
 
 const GAME_URL = process.env.GAME_URL ?? 'http://localhost:3001';
@@ -45,6 +45,8 @@ const bold = (s: string) => `\x1b[1m${s}\x1b[0m`;
 const dim = (s: string) => `\x1b[2m${s}\x1b[0m`;
 
 interface GameView {
+  /** Identifies this run of the game process; versions restart with it. */
+  bootId: string;
   version: number;
   metrics: Metrics;
   patchLog: Array<{ at: number; note: string; summary: string[]; version: number }>;
@@ -56,6 +58,7 @@ async function readGame(): Promise<GameView | null> {
     if (!res.ok) return null;
     const data = (await res.json()) as any;
     return {
+      bootId: String(data.bootId ?? 'unknown'),
       version: data.pack?.version ?? 0,
       metrics: {
         throughput: Number(data.derived?.throughput ?? 0),
@@ -108,7 +111,39 @@ async function main(): Promise<void> {
 
   console.log(dim(`supervisor watching ${GAME_URL} — ${CLEARANCE_THRESHOLD} clean changes earns ${EARNABLE}\n`));
 
-  const seen = new Set(readLedger().map((o) => o.version));
+  // A change whose observation window was still open when the supervisor died
+  // can never be judged: the floor it would have been measured against is gone.
+  // Leaving it unresolved sounds neutral and is not — `standing` ignores
+  // unsettled entries, so a change that shipped moments before a crash would
+  // count neither for nor against clearance, and a regression could disappear
+  // by being badly timed. Unobserved is treated as failed, which is the same
+  // bias every other judgement here takes.
+  const stranded = readLedger().filter((o) => o.regression === null);
+  for (const o of stranded) {
+    settle(
+      { bootId: o.bootId, version: o.version },
+      o.before,
+      true,
+      'never observed — the supervisor was not running when its window closed',
+    );
+  }
+  if (stranded.length) {
+    console.log(
+      dim(`  ${stranded.length} change(s) were mid-observation at the last shutdown; counted as unproven.\n`),
+    );
+  }
+
+  // Bring the live gate in line with the record before watching anything.
+  // reconcile only ran after a settle, so a regression recorded before a
+  // restart left earned clearance in place until the *next* change happened to
+  // land — and on a quiet system that could be never.
+  await reconcile();
+
+  // Keyed by run and version together. Keying on version alone meant that
+  // after a server restart — when versions begin again at 1 — a fresh run's
+  // first few changes were treated as already seen and never judged, quietly
+  // suspending supervision exactly when nobody was watching.
+  const seen = new Set(readLedger().map(entryKey));
 
   /**
    * Observations still inside their settling window, keyed by version.
@@ -119,7 +154,7 @@ async function main(): Promise<void> {
    * clearance nor against it, so a fast enough sequence would freeze the
    * agent's standing entirely.
    */
-  const pending = new Map<number, { before: Metrics; deadline: number }>();
+  const pending = new Map<number, { before: Metrics; deadline: number; bootId: string }>();
   let last: GameView | null = await readGame();
 
   for (;;) {
@@ -133,7 +168,7 @@ async function main(): Promise<void> {
     for (const [version, obs] of [...pending.entries()].sort((a, b) => a[0] - b[0])) {
       if (Date.now() < obs.deadline) continue;
       const verdict = judge(obs.before, now.metrics);
-      settle(version, now.metrics, verdict.regression, verdict.reason);
+      settle({ bootId: obs.bootId, version }, now.metrics, verdict.regression, verdict.reason);
       console.log(
         `  v${version} ${verdict.regression ? bold('REGRESSION') : 'held'} — ${verdict.reason}`,
       );
@@ -148,11 +183,14 @@ async function main(): Promise<void> {
     const previous = last;
     if (previous) {
       const landed = now.patchLog
-        .filter((p) => p.version > previous.version && !seen.has(p.version))
+        .filter(
+          (p) => p.version > previous.version && !seen.has(entryKey({ bootId: now.bootId, version: p.version })),
+        )
         .sort((a, b) => a.version - b.version);
 
       for (const entry of landed) {
         const outcome: Outcome = {
+          bootId: now.bootId,
           version: entry.version,
           at: entry.at ?? 0,
           recordedAt: new Date().toISOString(),
@@ -164,12 +202,13 @@ async function main(): Promise<void> {
           reason: null,
         };
         append(outcome);
-        seen.add(entry.version);
+        seen.add(entryKey({ bootId: now.bootId, version: entry.version }));
         console.log(
           `\n  v${entry.version} landed — ${outcome.summary.join('; ') || 'no summary'}` +
             dim(`\n  watching for ${SETTLE_SECONDS}s before judging it`),
         );
         pending.set(entry.version, {
+          bootId: now.bootId,
           before: previous.metrics,
           deadline: Date.now() + SETTLE_SECONDS * 1000,
         });

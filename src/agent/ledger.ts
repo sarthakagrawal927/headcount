@@ -17,6 +17,16 @@ import { dirname } from 'node:path';
 const LEDGER_PATH = process.env.LEDGER_PATH ?? '.headcount/ledger.jsonl';
 
 export interface Outcome {
+  /**
+   * Which run of the game process this change belongs to.
+   *
+   * Pack versions restart at 1 with the server, so v2 today and v2 after a
+   * restart are different events. Without this the ledger silently treats them
+   * as the same one, and a fresh run's first few changes are skipped as
+   * already-seen — which disables supervision exactly when it is least
+   * observed. Older entries have no boot id and are treated as their own run.
+   */
+  bootId?: string;
   /** Pack version this change produced. */
   version: number;
   /** In-game time the change landed. */
@@ -48,6 +58,11 @@ function ensureDir(): void {
   if (dir && !existsSync(dir)) mkdirSync(dir, { recursive: true });
 }
 
+/** Identity of a shipped change: which run, and which version within it. */
+export function entryKey(o: { bootId?: string; version: number }): string {
+  return `${o.bootId ?? 'legacy'}:${o.version}`;
+}
+
 export function readLedger(): Outcome[] {
   if (!existsSync(LEDGER_PATH)) return [];
   return readFileSync(LEDGER_PATH, 'utf8')
@@ -73,9 +88,16 @@ export function append(entry: Outcome): void {
  * the observation window closes. Rewriting rather than appending keeps one
  * line per shipped change, which is what makes the file readable.
  */
-export function settle(version: number, after: Metrics, regression: boolean, reason: string): void {
+export function settle(
+  key: { bootId?: string; version: number },
+  after: Metrics,
+  regression: boolean,
+  reason: string,
+): void {
   const all = readLedger();
-  const idx = all.map((o) => o.version).lastIndexOf(version);
+  const idx = all
+    .map((o) => entryKey(o))
+    .lastIndexOf(entryKey(key));
   if (idx === -1) return;
   all[idx] = { ...all[idx], after, regression, reason };
   ensureDir();
