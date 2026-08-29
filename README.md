@@ -16,17 +16,13 @@ never scales: a human's attention. HEADCOUNT makes that the economy. Then it
 hands the design of the game to an agent, which must prove every change in
 simulation and ask a human before it can touch anything.
 
-![The operations console at the attention wall: escalations arriving at 1.00/sec against a fixed ceiling of 1.00, 76% of the workforce blocked, nine questions queued](docs/images/console-at-the-wall.png)
+![The HEADCOUNT operations console: escalations arriving at 1.02 questions per second against a fixed ceiling of 1.00, 65% of the workforce blocked, five questions queued, and an agent activity panel showing two approved design changes](docs/images/console-at-the-wall.png)
 
-*Twelve people on the floor. Nine of them are standing still waiting for you to
-answer a question — and `Quality Inspector`, in the hire panel, is a role an
-agent designed, proved in simulation and asked permission to add.*
-
-> **The result we'd point a judge at.** The agent once shipped a change that
-> passed simulation, passed evidence binding, and applied with **no human
-> involved at all** — because it had earned that autonomy. Throughput on the
-> real floor then fell by two thirds, and its clearance was revoked
-> automatically. Simulation was not sufficient. → [Earned autonomy](#earned-autonomy)
+*Nine people on the floor and six of them standing still, waiting for you to
+answer a question. On the right, two changes an agent designed: a soft cap it
+proved in simulation, and `Quality Inspector` — a supervisor role that did not
+exist when the game started. Both were argued for, measured, and approved
+before they landed.*
 
 ## The one equation
 
