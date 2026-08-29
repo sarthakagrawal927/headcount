@@ -86,8 +86,29 @@ simulation with an explanation, which teaches the agent mid-run.
 TrueForge stores each agent's approval policy in its manifest and **re-resolves
 that manifest on every turn**. So clearance is a runtime property: narrowing
 `requireApprovalForTools` via `agents.update` grants autonomy mid-session, and
-widening it takes autonomy back. Trust is spent by failure rather than declared
-at deploy time (`src/agent/trust.ts`).
+widening it takes it back (`src/agent/trust.ts`).
+
+Nobody grants it by hand. `src/agent/autonomy.ts` is a supervisor process that
+watches the live game, measures the floor before and after every change the
+agent lands, and writes the result to an auditable ledger. A run of changes
+that did not make things worse earns clearance; one that did takes it back
+immediately. It talks only to the game's read surface and the harness's agent
+API, so it works regardless of who applied the change.
+
+Approval gates are a good default and a bad steady state: a human who must
+approve everything forever ends up approving everything without reading it.
+
+**The run that justifies the whole design.** The agent proposed raising riveter
+confusion from 0.3 to 0.9 — framed as tightening tolerances. The simulator
+passed it: *"the run grows, meets the attention wall, and stays playable past
+it."* Evidence binding passed it. It had earned clearance, so **it applied with
+no human involved at all.** Throughput on the real floor then fell from 4.59 to
+1.56 tasks/s, the supervisor judged it a regression, and clearance was revoked
+automatically.
+
+Simulation was not sufficient. A design can clear every pre-flight check and
+still be wrong in production, and the only thing that catches that is watching
+what actually happens and being willing to take autonomy back.
 
 The footgun this depends on: the session must be bound to the agent **by name**.
 An inline spec freezes the manifest for the session's life and the rewrite
@@ -118,6 +139,8 @@ MODEL_FQN=<provider/model> npx tsx src/agent/provision.ts   # create the agent
 npx tsx src/agent/demo.ts                                   # run the design loop
 npx tsx src/agent/demo.ts --approve                         # …and approve at the gate
 npx tsx src/agent/clearance-demo.ts                         # gated → cleared → gated
+npx tsx src/agent/autonomy.ts                               # the supervisor: earn and lose clearance
+npx tsx src/agent/autonomy.ts --once                        # current standing and gate
 npm test                                                    # 17 tests
 ```
 
