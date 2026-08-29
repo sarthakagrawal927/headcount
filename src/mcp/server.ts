@@ -288,7 +288,7 @@ function buildServer(): McpServer {
       // that quietly zeroed click revenue while arguing about supervisors.
       const undeclared = summary.filter((change) => {
         const subject = declarationKey(change);
-        return !changes.some((d) => d.toLowerCase().includes(subject));
+        return !changes.some((d) => mentions(d, subject));
       });
       if (undeclared.length) {
         return fail('Patch refused: the change list is incomplete. The live game is unchanged.', {
@@ -415,6 +415,20 @@ function buildServer(): McpServer {
  * like "clickRevenue: 1 -> 0" or "added role quality_inspector (tier 2)"; the
  * subject is the field or entity being changed.
  */
+/**
+ * Does a plain-English declaration mention this subject?
+ *
+ * Identifiers are snake_case and prose is not: a change to `line_lead`
+ * is declared as "the Line Lead". Comparing them literally marked correct
+ * declarations as incomplete and refused honest patches — a false accusation,
+ * which is the worst failure available to a check whose whole job is catching
+ * dishonesty. Separators are flattened on both sides before comparing.
+ */
+function mentions(declaration: string, subject: string): boolean {
+  const flatten = (t: string) => t.toLowerCase().replace(/[_\-\s]+/g, ' ').trim();
+  return flatten(declaration).includes(flatten(subject));
+}
+
 function declarationKey(change: string): string {
   const scalar = /^([A-Za-z]+):/.exec(change);
   if (scalar) return scalar[1].toLowerCase();
