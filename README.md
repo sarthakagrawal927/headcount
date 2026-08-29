@@ -48,7 +48,7 @@ any model. Design isn't closed-form, so that's the job it gets:
 
 1. Reads the live game through MCP (`get_state`, `get_telemetry`, `get_content`)
 2. Diagnoses where the wall is and which escape the content pack fails to make attractive
-3. Designs a change, guided by a `SKILL.md` carrying the genre's real math and a taxonomy of structural novelty
+3. Designs a change, guided by a git-backed `SKILL.md` carrying the genre's real math and a taxonomy of structural novelty — only its name and description sit in context; the body is sparse-cloned into the sandbox and read when the agent decides it is relevant
 4. **Proves it** with `simulate_patch` — headless, deterministic, across play archetypes
 5. Asks a human to approve before `apply_patch` touches the running game
 
@@ -92,6 +92,18 @@ at deploy time (`src/agent/trust.ts`).
 The footgun this depends on: the session must be bound to the agent **by name**.
 An inline spec freezes the manifest for the session's life and the rewrite
 silently does nothing.
+
+## Harness surface used
+
+| Capability | How |
+| --- | --- |
+| MCP tools | The game is a remote MCP server; 7 tools, annotated so the harness can gate them |
+| Sandbox | Local provider — skills and the MCP client script mount there, no Daytona key required |
+| Skills | `idle-game-design` sparse-cloned from this repo, loaded on demand |
+| Approval gates | `requireApprovalForTools` on all three mutating tools |
+| Subagents | Enabled for fanning playtests across competing play archetypes |
+| Session persistence | Sessions bound by name, so manifest changes take effect on the next turn |
+| Context management | Compaction and large-tool-response offloading on |
 
 ## Running it
 
