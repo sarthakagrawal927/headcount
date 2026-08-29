@@ -126,6 +126,22 @@ question, the rationale attached to apply_patch — those are markdown. Over-cha
 is worse than not charting: it buries the two blocks that carry the argument.
 One block per message. Never two.
 
+OPENUI IS NOT A PROGRAMMING LANGUAGE. This is the mistake that ruins the block.
+It is a flat list of \`name = value\` statements and nothing else. There are no
+loops, no list comprehensions, no \`for\`, no \`if\`, no function calls, no
+\`round()\`, no \`str()\`, no \`#\` comments, no variables carried over from the
+tool response. \`telemetry\` does not exist inside the block. You cannot compute
+anything in there.
+
+So: read the tool response, pick 5 to 8 evenly spaced samples out of it YOURSELF,
+round them YOURSELF, and type the resulting numbers out as literal arrays:
+
+    ts = ["709", "739", "769", "799", "829"]
+    sThr = [3.35, 3.65, 2.9, 1.98, 1.53]
+
+If you catch yourself writing a bracket that contains the word \`for\`, stop and
+type the numbers instead.
+
 RULES THE RENDERER ACTUALLY ENFORCES:
 
   * NEVER write Query(...) or Mutation(...). The parser accepts them and the chat
@@ -133,14 +149,27 @@ RULES THE RENDERER ACTUALLY ENFORCES:
     their default argument forever, with no error. There is no live-polling
     dashboard on this surface. Copy the real numbers out of the tool response you
     just received and write them into the block as literal arrays.
+  * A statement ends at the first newline that is NOT inside brackets. Wrapping a
+    long component call across several lines is fine — the newlines are inside
+    its parentheses. Starting a new \`name = ...\` mid-expression is not.
+  * Define each name exactly once. A second \`name = ...\` is a bug.
+  * Every array in the same chart must have the same length: the labels array and
+    each Series values array. Count them before you finish.
   * Round before you write. Telemetry carries fifteen decimal places; render
-    throughput and rates to 2 dp, cash and counts to 0 dp.
-  * Positional arguments only. Stack([kids], "row", "l") — never direction: "row".
+    throughput and rates to 2 dp, cash and counts to 0 dp. Write fractions as
+    fractions (0.93), not as percentages, when they share an axis with a rate.
+  * Positional arguments only. Arguments are bare values in the documented
+    order. NEVER put a name in front of one — not \`labels=[...]\`, not
+    \`direction: "row"\`. Write \`LineChart(ts, [sThr], "natural", "seconds", "")\`.
+  * Inside the fence there is nothing but \`name = value\` statements. No prose,
+    no "Diagnosis:", no headings. Your two sentences of diagnosis go AFTER the
+    closing fence.
   * Every name you define must be reachable from root, or it is silently dropped.
   * Tables paginate at 10 rows. Keep comparison tables to the rows that matter.
   * Do not repeat numbers in prose that are already in the block. Outside the
     block, write only what the chart cannot say: the diagnosis, the trade-off you
-    accepted, what you want the human to decide.
+    accepted, what you want the human to decide. Prose and block must agree — do
+    not cite a blocked fraction in the text that is not the one you plotted.
 
 THE COMPONENTS THAT EXIST. Use these and nothing else — an unregistered name
 renders as empty space:
@@ -203,7 +232,15 @@ bPatch = Series("Patched", [4.67, 3.16])
 
 Use "success" for a verdict that holds, "warning" when something got worse, and
 "error" for degenerate or stalled — and when it is degenerate or stalled, say so
-in the callout and discard the design rather than arguing with it.`;
+in the callout and discard the design rather than arguing with it.
+
+BEFORE YOU CLOSE THE FENCE, re-read your block and check all six:
+  1. \`root = Stack([...])\` is the first line.
+  2. Every line inside the fence is \`name = value\`. Nothing else is in there.
+  3. No argument has a name in front of it. No \`=\` or \`:\` inside any \`(\`.
+  4. Every name used is defined, every name defined is used, each defined once.
+  5. Every array is literal digits and strings you typed — no \`for\`, no \`round\`.
+  6. The labels array and every Series values array have the same length.`;
 
 /* ---------------------------------------------------------------- helpers */
 
@@ -217,13 +254,68 @@ export function extractOpenUiBlocks(markdown: string): string[] {
 }
 
 export interface OpenUiProblem {
-  code: 'no-root' | 'root-not-first' | 'unknown-component' | 'undefined-reference' | 'unreachable' | 'inert-query';
+  code:
+    | 'no-root'
+    | 'root-not-first'
+    | 'unknown-component'
+    | 'undefined-reference'
+    | 'unreachable'
+    | 'inert-query'
+    | 'redefined'
+    | 'ragged-series'
+    | 'stray-line';
   detail: string;
 }
 
-const IDENT = /^([A-Za-z_$][A-Za-z0-9_$]*)\s*=/;
+const STATEMENT = /^([A-Za-z_$][A-Za-z0-9_$]*)\s*=([\s\S]*)$/;
 const CALL = /\b([A-Z][A-Za-z0-9]*)\s*\(/g;
-const REF = /\b([a-z_$][A-Za-z0-9_$]*)\b/g;
+const REF = /\b([A-Za-z_$][A-Za-z0-9_$]*)\b/g;
+
+/** Names that are language builtins rather than registered components. */
+const NON_COMPONENT_CALLABLES = new Set(['Action']);
+
+/**
+ * Split a block into logical statements the way the renderer does.
+ *
+ * The shipped splitter is token-based, not line-based: it walks tokens tracking
+ * bracket depth, and a newline only terminates a statement when depth is zero
+ * (a newline inside brackets is skipped outright). So a component call may wrap
+ * across as many physical lines as it likes. Reproducing that here matters —
+ * a naive line-based lint reports a wrapped call as a dozen phantom errors.
+ */
+function splitStatements(block: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let quote: string | null = null;
+  let escaped = false;
+  let current = '';
+
+  for (const ch of block) {
+    if (quote) {
+      current += ch;
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      current += ch;
+      continue;
+    }
+    if (ch === '(' || ch === '[' || ch === '{') depth++;
+    else if (ch === ')' || ch === ']' || ch === '}') depth = Math.max(0, depth - 1);
+
+    if (ch === '\n' && depth === 0) {
+      if (current.trim()) out.push(current.trim());
+      current = '';
+      continue;
+    }
+    current += ch;
+  }
+  if (current.trim()) out.push(current.trim());
+  return out;
+}
 
 /**
  * Check a block against what the renderer will accept.
@@ -231,67 +323,132 @@ const REF = /\b([a-z_$][A-Za-z0-9_$]*)\b/g;
  * This is a lint, not a parser: it catches the failures that are SILENT at
  * runtime — an unregistered component name, a variable nothing references, a
  * reference to a name that was never defined, and a `Query`/`Mutation` that will
- * never fetch. All four render as blank space with no error in the UI, which is
- * exactly why they are worth catching here instead.
+ * never fetch. All of those render as blank space with no error in the UI, which
+ * is exactly why they are worth catching here instead.
  */
 export function lintOpenUiBlock(block: string): OpenUiProblem[] {
   const problems: OpenUiProblem[] = [];
   const known = new Set<string>(CHAT_LIBRARY_COMPONENTS);
 
-  const lines = block
-    .split('\n')
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0 && !l.startsWith('//'));
+  const statements = splitStatements(block);
+  const defined = new Map<string, string>();
+  const order: string[] = [];
 
-  const defined: string[] = [];
-  for (const line of lines) {
-    const m = IDENT.exec(line);
-    if (m) defined.push(m[1]);
+  for (const statement of statements) {
+    const m = STATEMENT.exec(statement);
+    if (!m) {
+      // The parser skips to end-of-line when a statement does not start with
+      // `identifier =`. Harmless, but it is always a mistake worth reporting —
+      // usually a stray comment or a sentence of prose left inside the fence.
+      problems.push({
+        code: 'stray-line',
+        detail: `\`${statement.split('\n')[0].slice(0, 60)}\` is not a \`name = value\` statement; the parser skips it`,
+      });
+      continue;
+    }
+    const [, name, rhs] = m;
+    if (defined.has(name)) {
+      problems.push({ code: 'redefined', detail: `\`${name}\` is defined more than once` });
+    } else {
+      order.push(name);
+    }
+    defined.set(name, rhs);
   }
 
-  if (!defined.includes('root')) {
+  if (!defined.has('root')) {
     problems.push({ code: 'no-root', detail: 'no `root = ...` statement; nothing will render' });
-  } else if (defined[0] !== 'root') {
-    problems.push({ code: 'root-not-first', detail: `first statement is \`${defined[0]}\`, not \`root\` — the shell will not stream in first` });
+  } else if (order[0] !== 'root') {
+    problems.push({
+      code: 'root-not-first',
+      detail: `first statement is \`${order[0]}\`, not \`root\` — the shell will not stream in first`,
+    });
   }
 
-  for (const line of lines) {
-    for (const m of line.matchAll(CALL)) {
+  const referenced = new Set<string>();
+  for (const [, rhs] of defined) {
+    for (const m of rhs.matchAll(CALL)) {
       const name = m[1];
       if (name === 'Query' || name === 'Mutation') {
         problems.push({
           code: 'inert-query',
           detail: `${name}() has no tool provider in the TrueForge chat — it renders its defaults forever and never fetches`,
         });
-      } else if (!known.has(name) && !['Action', 'Series', 'Slice', 'Point'].includes(name)) {
-        problems.push({ code: 'unknown-component', detail: `\`${name}\` is not registered in the chat library and will render as nothing` });
+      } else if (!known.has(name) && !NON_COMPONENT_CALLABLES.has(name)) {
+        problems.push({
+          code: 'unknown-component',
+          detail: `\`${name}\` is not registered in the chat library and will render as nothing`,
+        });
       }
     }
-  }
 
-  const definedSet = new Set(defined);
-  const referenced = new Set<string>();
-  for (const line of lines) {
-    const eq = line.indexOf('=');
-    const rhs = eq >= 0 ? line.slice(eq + 1) : line;
-    // Strip string literals so words inside labels are not mistaken for refs.
-    const bare = rhs.replace(/"(?:[^"\\]|\\.)*"/g, '""');
+    // Strip string literals, object keys and component/builtin call heads, so
+    // only bare identifier references remain.
+    const bare = rhs
+      .replace(/"(?:[^"\\]|\\.)*"/g, '""')
+      .replace(/'(?:[^'\\]|\\.)*'/g, "''")
+      .replace(/@?\b[A-Za-z_$][A-Za-z0-9_$]*\s*\(/g, '(')
+      .replace(/\b[A-Za-z_$][A-Za-z0-9_$]*\s*:/g, ':');
+
     for (const m of bare.matchAll(REF)) {
       const name = m[1];
-      if (definedSet.has(name)) referenced.add(name);
-      else if (/^[a-z]/.test(name) && !isKeyword(name)) {
+      if (defined.has(name)) referenced.add(name);
+      else if (!isKeyword(name)) {
         problems.push({ code: 'undefined-reference', detail: `\`${name}\` is referenced but never defined` });
       }
     }
   }
 
-  for (const name of defined) {
+  for (const name of order) {
     if (name !== 'root' && !referenced.has(name)) {
       problems.push({ code: 'unreachable', detail: `\`${name}\` is defined but never referenced — it is silently dropped` });
     }
   }
 
+  problems.push(...checkSeriesLengths(defined));
   return dedupe(problems);
+}
+
+/**
+ * A chart whose labels array and series values arrays disagree in length is the
+ * one malformed dashboard that still renders — it just renders wrong, silently
+ * truncated. Worth catching.
+ */
+function checkSeriesLengths(defined: Map<string, string>): OpenUiProblem[] {
+  const problems: OpenUiProblem[] = [];
+  const arrayLength = (expr: string): number | null => {
+    const trimmed = expr.trim();
+    if (!trimmed.startsWith('[') || !trimmed.endsWith(']')) return null;
+    const inner = trimmed.slice(1, -1).trim();
+    if (!inner) return 0;
+    if (/[[\](){}]/.test(inner.replace(/"(?:[^"\\]|\\.)*"/g, '""'))) return null;
+    return inner.split(',').filter((s) => s.trim().length > 0).length;
+  };
+
+  const lengthOf = (token: string): number | null => {
+    const direct = arrayLength(token);
+    if (direct !== null) return direct;
+    const referenced = defined.get(token.trim());
+    return referenced ? arrayLength(referenced) : null;
+  };
+
+  for (const [name, rhs] of defined) {
+    const chart = /^\s*(LineChart|AreaChart|BarChart|HorizontalBarChart|RadarChart)\s*\(([\s\S]*)\)\s*$/.exec(rhs);
+    if (!chart) continue;
+    const labelsToken = chart[2].split(',')[0];
+    const labels = lengthOf(labelsToken);
+    if (labels === null) continue;
+
+    for (const m of chart[2].matchAll(/Series\s*\(\s*("(?:[^"\\]|\\.)*"|[A-Za-z_$][A-Za-z0-9_$]*)\s*,([\s\S]*?)\)(?=\s*[,\])])/g)) {
+      const values = lengthOf(m[2]);
+      if (values !== null && values !== labels) {
+        problems.push({
+          code: 'ragged-series',
+          detail: `${name}: ${labels} labels but series ${m[1]} has ${values} values`,
+        });
+      }
+    }
+  }
+  return problems;
 }
 
 function isKeyword(name: string): boolean {
