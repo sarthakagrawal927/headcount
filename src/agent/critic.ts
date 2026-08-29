@@ -696,7 +696,12 @@ export interface ConveneOptions extends RunOptions {
  * being altered — rather than on wording, which no two sentences share.
  */
 export function undeclaredEffects(proposal: Proposal): string[] {
-  const declared = proposal.declaredChanges.map((d) => d.toLowerCase());
+  // Identifiers are snake_case and prose is not: a change to `line_lead` gets
+  // declared as "the Line Lead". Comparing them literally marks correct
+  // declarations as undeclared, which is a false accusation from a check whose
+  // entire job is catching dishonesty.
+  const flatten = (t: string) => t.toLowerCase().replace(/[_\-\s]+/g, ' ').trim();
+  const declared = proposal.declaredChanges.map(flatten);
   return proposal.actualEffects.filter((effect) => {
     const scalar = /^([A-Za-z]+):/.exec(effect);
     const entity = /\b(role|SOP)\s+([A-Za-z0-9_.-]+)/i.exec(effect);
@@ -707,7 +712,7 @@ export function undeclaredEffects(proposal: Proposal): string[] {
         : /tenure ladder/i.test(effect)
           ? 'tenure'
           : effect.toLowerCase().slice(0, 12);
-    return !declared.some((d) => d.includes(subject));
+    return !declared.some((d) => d.includes(flatten(subject)));
   });
 }
 
