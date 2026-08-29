@@ -676,11 +676,56 @@ export interface ConveneOptions extends RunOptions {
  * shown — that is the whole mechanism. The human reads a dissent next to the
  * pitch instead of only the pitch.
  */
+/**
+ * Effects the server recorded that no declared change accounts for.
+ *
+ * Deliberately the same shape of comparison the game server makes before it
+ * will apply a patch: match on the subject of the change — the field or entity
+ * being altered — rather than on wording, which no two sentences share.
+ */
+export function undeclaredEffects(proposal: Proposal): string[] {
+  const declared = proposal.declaredChanges.map((d) => d.toLowerCase());
+  return proposal.actualEffects.filter((effect) => {
+    const scalar = /^([A-Za-z]+):/.exec(effect);
+    const entity = /\b(role|SOP)\s+([A-Za-z0-9_.-]+)/i.exec(effect);
+    const subject = scalar
+      ? scalar[1].toLowerCase()
+      : entity
+        ? entity[2].toLowerCase()
+        : /tenure ladder/i.test(effect)
+          ? 'tenure'
+          : effect.toLowerCase().slice(0, 12);
+    return !declared.some((d) => d.includes(subject));
+  });
+}
+
 export async function convene(proposal: Proposal, options: ConveneOptions = {}): Promise<PanelResult> {
   const lenses = options.lenses ?? LENSES;
   // In parallel: they are independent by construction, and three sequential
   // turns against a slow model is a minute of nothing happening.
   const verdicts = await Promise.all(lenses.map((lens) => runCritic(lens, proposal, options)));
+
+  // The undeclared lens duplicates a check the server already performs
+  // deterministically and correctly, so a model guessing at it adds noise
+  // rather than judgement. Observed: it refuted a patch because cost growth and
+  // confusion had *not* changed, which is not what undeclared means.
+  //
+  // Code decides whether anything is undeclared; the critic is left to judge
+  // whether it matters. If nothing is undeclared, that lens cannot refute.
+  const undeclared = undeclaredEffects(proposal);
+  const adjusted = verdicts.map((v) =>
+    v.lens === 'undeclared' && v.refuted && undeclared.length === 0
+      ? {
+          ...v,
+          refuted: false,
+          reason:
+            'No undeclared effects: every recorded effect is covered by the change list. ' +
+            `(Critic said: ${v.reason})`,
+        }
+      : v,
+  );
+  verdicts.length = 0;
+  verdicts.push(...adjusted);
 
   const refutedCount = verdicts.filter((v) => v.refuted).length;
   const blocked = refutedCount * 2 > verdicts.length;
