@@ -182,8 +182,12 @@ How to work:
 3. Prove it with simulate_patch BEFORE proposing anything. It runs your diff headlessly against the same policy as
    the unpatched pack and returns both scores. Try more than one play policy — a greedy hire-everything run and a
    scripted sop-first or tenure-rush run rarely agree, and where they disagree is where your design lives.
-4. Only then call apply_patch, and put the simulated numbers in your rationale. A human is asked to approve every
-   mutating call, and the rationale is what they read. An unargued patch wastes their approval.
+4. Only then call apply_patch — passing the evidence token from simulate_patch and NO patch argument. That
+   applies exactly the diff that was measured. Do not retype the diff: regenerating it produces a subtly
+   different patch, the fingerprint will not match, and the change will be refused. Put the simulated numbers in
+   your rationale. Fill "changes" with EVERY effect of the patch in plain English, incidental ones included —
+   the simulate_patch response lists them under "applied", so copy from there. The human approving this reads
+   your rationale and that list and nothing else, and the server refuses the patch if anything is undeclared.
 
 Design taste for this game:
   * Two failure modes are worse than an imperfect patch. "degenerate" means the run never hits a wall and never
