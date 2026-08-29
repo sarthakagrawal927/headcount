@@ -269,6 +269,9 @@ Qodo reviews every pull request on this repository. Substantive work goes
 through a branch and a PR; nothing meaningful lands on `main` unreviewed.
 
 **Representative PR: [#2 — Test the judgement that governs autonomy](https://github.com/sarthakagrawal927/headcount/pull/2)**
+(its review thread; the work merged as
+[#4](https://github.com/sarthakagrawal927/headcount/pull/4) after #2 was
+auto-closed when the branch it was stacked on was deleted on merge)
 
 Qodo raised **six findings, four marked High**, and every one landed in
 `src/agent/autonomy.ts` — the file whose entire job is deciding whether an
@@ -303,8 +306,8 @@ both alternatives it offered and recorded why the checked-in JSONL ledger stays
 and a transactional store would trade that legibility for concurrency
 guarantees a single-supervisor system does not need.
 
-**[PR #1](https://github.com/sarthakagrawal927/headcount/pull/1)** returned
-clean from Qodo: 0 bugs, 0 rule violations, 0 requirement gaps. It had earlier
+**[PR #1](https://github.com/sarthakagrawal927/headcount/pull/1)** (merged)
+returned clean from Qodo: 0 bugs, 0 rule violations, 0 requirement gaps. It had earlier
 taken a separate finding — the suite exercised only the `degenerate` failure
 shape and never `stalled`, which would have let a regression in stall detection
 mint apparently-playable evidence for a collapsed design — closed before Qodo's
