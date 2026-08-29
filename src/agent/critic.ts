@@ -80,6 +80,8 @@ export interface CriticVerdict {
   refuted: boolean;
   reason: string;
   severity: Severity;
+  /** The ACTUAL EFFECTS line this objection is about, copied verbatim. */
+  cites?: string;
   /** Set when the verdict was manufactured by failing closed rather than read. */
   failedClosed?: string;
   /** Read-only tools this critic actually called, in order. */
@@ -223,10 +225,16 @@ Rules of the job:
 const JSON_CONTRACT = `Reply with a single JSON object and NOTHING else. No prose before it, no prose after it, no
 markdown fence, no explanation of the JSON. Exactly these three keys:
 
-{"refuted": true, "reason": "<one sentence, max 30 words, naming the specific field or effect>", "severity": "high"}
+{"refuted": true, "reason": "<one sentence, max 30 words, naming the specific field or effect>", "severity": "high", "cites": "<one line copied EXACTLY from ACTUAL EFFECTS, or empty string>"}
 
   refuted   boolean, true if you are blocking this proposal
   reason    string, one sentence; if refuted:false say what you checked and found clean
+  cites     string, and this is the important one. If you are refuting, copy one line
+            from ACTUAL EFFECTS verbatim — the line your objection is about. Do not
+            paraphrase it, do not invent one. If no line in ACTUAL EFFECTS supports
+            your objection, then you do not have one: set refuted to false. An
+            objection about something that is not in ACTUAL EFFECTS is a guess, and
+            a guess that blocks a proposal is worse than no critic at all.
   severity  "low" | "medium" | "high"
 
 If you cannot produce that object, you have failed and your verdict will be recorded as a refutation.`;
@@ -468,7 +476,7 @@ function failClosed(lens: Lens, why: string, raw: string, ms: number, extra: Par
  * `refuted` key handles all three without regexes that fall over on nested
  * objects. Exported because its failure modes are worth testing directly.
  */
-export function parseVerdict(text: string): { refuted: boolean; reason: string; severity: Severity } | { error: string } {
+export function parseVerdict(text: string): { refuted: boolean; reason: string; severity: Severity; cites: string } | { error: string } {
   if (!text || !text.trim()) return { error: 'empty reply' };
   const stripped = text.replace(/```(?:json)?/gi, '');
 
@@ -507,7 +515,7 @@ export function parseVerdict(text: string): { refuted: boolean; reason: string; 
   return { error: 'no JSON object with a "refuted" key' };
 }
 
-function normalise(parsed: Record<string, unknown>): { refuted: boolean; reason: string; severity: Severity } {
+function normalise(parsed: Record<string, unknown>): { refuted: boolean; reason: string; severity: Severity; cites: string } {
   const rawRefuted = parsed.refuted;
   // Anything that is not an explicit, unambiguous "no" counts as a refusal.
   // `"maybe"`, `null` and `1` all mean the critic did not clear this patch.
@@ -521,7 +529,10 @@ function normalise(parsed: Record<string, unknown>): { refuted: boolean; reason:
         : 'No objection stated.';
   const sev = String(parsed.severity ?? '').toLowerCase();
   const severity: Severity = sev === 'high' ? 'high' : sev === 'low' ? 'low' : 'medium';
-  return { refuted, reason, severity };
+  // The line from ACTUAL EFFECTS the objection is about. Checked against the
+  // real effects by the panel; an objection citing nothing real is discarded.
+  const cites = typeof parsed.cites === 'string' ? parsed.cites.trim() : '';
+  return { refuted, reason, severity, cites };
 }
 
 export interface RunOptions {
@@ -630,6 +641,7 @@ export async function runCritic(lens: Lens, proposal: Proposal, options: RunOpti
       refuted: parsed.refuted,
       reason: parsed.reason,
       severity: parsed.severity,
+      cites: parsed.cites,
       toolCalls,
       violations,
       raw,
@@ -765,6 +777,28 @@ export async function convene(proposal: Proposal, options: ConveneOptions = {}):
   // change list does not account for, or a measured drop in the simulation.
   // Everything else becomes dissent — which still reaches the human, attached
   // to the pitch, where an argument they can weigh belongs.
+  // A refutation that cannot point at a real effect is a guess. Small models
+  // produce these readily: live runs objected to fields that had not changed,
+  // called a cost reduction a loss of revenue, and refused to remove a soft cap
+  // that never existed. Requiring the critic to quote the line it is arguing
+  // about — and checking that the line exists — turns an unfalsifiable opinion
+  // into one that can be wrong out loud.
+  const grounded = verdicts.map((v) => {
+    if (!v.refuted) return v;
+    const cited = (v as { cites?: string }).cites?.trim();
+    if (!cited) return v;
+    const real = proposal.actualEffects.some((e) => e.includes(cited) || cited.includes(e));
+    return real
+      ? v
+      : {
+          ...v,
+          refuted: false,
+          reason: `Unfounded: cited "${cited}", which is not among the recorded effects. (${v.reason})`,
+        };
+  });
+  verdicts.length = 0;
+  verdicts.push(...grounded);
+
   const grounds = groundsToBlock(proposal);
   const blocked = refutedCount * 2 > verdicts.length && grounds !== null;
   const dissent = blocked ? [] : verdicts.filter((v) => v.refuted);
