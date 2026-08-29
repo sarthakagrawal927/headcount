@@ -200,3 +200,34 @@ Flags: `--approve` / `--deny` resolve the human gate in designer mode, `--lens
 undeclared,regression` restricts the panel, `--json` prints the verdicts
 machine-readably, `--timeout <seconds>` per critic, `--no-provision` skips the
 manifest refresh.
+
+## The gap this layer still has
+
+The panel runs in the driver, between the designer proposing and a human being
+asked. That placement assumes a human is going to be asked.
+
+Once the supervisor grants unattended `apply_patch`, they are not — and the
+panel's dissent has no audience. A refuted proposal could still reach the live
+game, because the thing the panel informs has been removed from the loop. We
+hit exactly this while building: a run made two `apply_patch` calls with no
+approval event, and the explanation was that clearance had been earned.
+
+Three ways out, in ascending order of how much we like them:
+
+1. **Do not grant `apply_patch` clearance at all.** Honest, and it throws away
+   the mechanic the project is about.
+2. **Move the panel to simulate time.** Every proposal gets refuted before it
+   can be applied, gated or not. Cheap, but it reviews designs that were never
+   going to be proposed and spends three agent runs doing it.
+3. **Bind the panel verdict the way simulation is bound.** `simulate_patch`
+   already mints a signed token that `apply_patch` refuses to proceed without.
+   A panel verdict could be minted the same way, and required *specifically
+   when the tool is ungated* — so the rule becomes: **you may act without a
+   human only if you have been refuted and survived.** The human and the panel
+   are then alternatives rather than a sequence, which is the right
+   relationship between them.
+
+Three is the correct design and is not built. It needs the MCP server to know
+whether a given call was gated, which it currently cannot see — the harness
+resolves the approval policy and the server only receives the call. Recording
+it here rather than quietly shipping the weaker version.
