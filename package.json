@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "mcp": "tsx src/mcp/server.ts",
     "sim": "tsx src/engine/cli.ts",
-    "agent": "tsx src/agent/provision.ts"
+    "agent": "tsx src/agent/provision.ts",
+    "stack": "./scripts/stack.sh",
+    "supervisor": "tsx src/agent/autonomy.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

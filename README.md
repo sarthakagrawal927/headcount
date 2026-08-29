@@ -130,7 +130,9 @@ silently does nothing.
 
 ```bash
 npm install
+./scripts/stack.sh --fresh       # everything, with an empty floor
 
+# or by hand:
 npx tsx src/mcp/server.ts        # the game, as an MCP server on :3001
 npm run dev                      # the operations console on :5173
 npx @truefoundry/trueforge@latest # the harness on :8790
