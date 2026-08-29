@@ -31,6 +31,7 @@ import {
   installPolicy,
   playtest,
   roleReadout,
+  bootId,
 } from './gameStore.js';
 import { ContentPatchSchema, PlayPolicySchema } from './schemas.js';
 import { mint, recall, tokenFingerprint, verify, type Verdict } from './evidence.js';
@@ -482,6 +483,10 @@ app.get('/game', async (_req, res) => {
   try {
     const game = await getGame();
     res.json({
+      // Distinguishes this run of the process from any other. Pack versions
+      // restart at 1 with the server, so a durable record keyed on version
+      // alone would confuse two different changes that share a number.
+      bootId: bootId(),
       state: game.state,
       derived: derive(game),
       roles: roleReadout(game),
@@ -553,6 +558,32 @@ app.post('/game/action', async (req, res) => {
     res.json({ ok: true, state: game.state, derived: derive(game) });
   } catch (err) {
     res.status(503).json({ ok: false, reason: (err as Error).message });
+  }
+});
+
+/**
+ * What a given evidence token actually applies.
+ *
+ * Read-only, and it exists so a reviewer — human or agent — can compare what a
+ * proposal *says* it does against what the server computes it does, without
+ * having to trust the proposal to describe itself. The declared-changes check
+ * makes that comparison internally; this exposes the same facts to anything
+ * reviewing before the call is made.
+ */
+app.get('/explain', async (req, res) => {
+  const token = String(req.query.evidence ?? '');
+  const fp = tokenFingerprint(token);
+  const patch = fp ? recall(fp) : undefined;
+  if (!patch) {
+    res.status(404).json({ error: 'no simulation on record for that token' });
+    return;
+  }
+  try {
+    const game = await getGame();
+    const { summary, errors } = applyPatchToPack(game.pack, patch);
+    res.json({ fingerprint: fp, patch, applied: summary, problems: errors });
+  } catch (err) {
+    res.status(503).json({ error: (err as Error).message });
   }
 });
 
