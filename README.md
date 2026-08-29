@@ -97,15 +97,35 @@ literally, verified against the harness before the panel will convene) and fail
 closed: an unparseable verdict counts as a refutation. A majority blocks the
 proposal from ever being shown.
 
-It runs on the real path, not in a test. On a live proposal claiming to add a
-Line Lead, all three refuted it independently and for different reasons: the
-declared `escalateFraction` was 0.15 while the patch set 0.5; throughput fell
-4.21 → 4.07; and the role already existed, differing only in cost and
-description. `BLOCKED — 3 of 3 critics refuted this proposal. It is not going
-to a human.` The
-panel's value is clearest on a proposal whose changes are *fully declared* and
-still harmful — the server's declaration check cannot fire there, and only a
-reader catches it.
+It runs on the real path, not in a test, and blocking requires more than a
+majority of opinions. A critic must quote the recorded effect it is objecting
+to, and the panel checks that the line exists — an objection citing nothing
+real is downgraded and says so. Blocking then additionally needs a *checkable*
+fact: an effect the change list does not account for, or the proposal's own
+simulation verdict coming back degenerate. Everything else becomes dissent that
+reaches the human attached to the pitch.
+
+That constraint exists because the unconstrained version failed. Small models
+fabricate: live runs refuted a patch because two fields had *not* changed,
+described a cost reduction as lost player revenue, and objected to removing a
+soft cap that never existed. Three vetoes, all invented, and the proposal died
+without anyone seeing it — this project's own argument turned against itself,
+since everywhere else it insists prose is not evidence.
+
+With citations required, a live run produced three independent objections and
+every one was real:
+
+```
+REFUTED undeclared: riveter costGrowth 1.15 -> 1.05, undeclared; the note only
+                    mentions adding a role
+REFUTED regression: the patch silently reduces riveter costGrowth, degrading
+                    scalability
+REFUTED novelty:    Quality Inspector duplicates Line Lead's escalation-
+                    absorption function
+BLOCKED — 3 of 3 refuted, and 1 effect is not in the change list.
+```
+
+The agent had tried to move a cost curve while claiming only to add a role.
 
 The bias is deliberate: a clean proposal is blocked perhaps half the time. An
 earlier, more permissive prompt produced critics that wrote the hidden change

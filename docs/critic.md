@@ -231,3 +231,26 @@ Three is the correct design and is not built. It needs the MCP server to know
 whether a given call was gated, which it currently cannot see — the harness
 resolves the approval policy and the server only receives the call. Recording
 it here rather than quietly shipping the weaker version.
+
+## Why a majority is necessary and not sufficient
+
+The panel originally blocked on a majority of refutations. In practice that
+made it a veto held by a small model, and small models fabricate: live runs
+produced a refutation because two fields had *not* changed, a cost reduction
+described as lost player revenue, and the removal of a soft cap that had never
+existed. Two of three votes, every one of them invented, and the proposal died
+without a human ever seeing it.
+
+That is this project's own mistake wearing the opposite hat. The argument
+everywhere else here is that prose is not evidence — an agent may not apply a
+change on the strength of its rationale, and a human's approval does not
+establish that anything was measured. A panel that blocks on unverifiable model
+opinion fails the same test.
+
+So blocking now requires a majority **and** something checkable: an effect the
+change list does not account for, or the proposal's own simulation verdict
+coming back degenerate or stalled. Both are facts the server computes.
+
+Everything else becomes dissent, which still reaches the human attached to the
+pitch. That is the right place for an argument someone can weigh, and the wrong
+place for a veto nobody can audit.
