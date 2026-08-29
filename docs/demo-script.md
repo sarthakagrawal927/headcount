@@ -11,7 +11,12 @@ npx tsx src/mcp/server.ts                    # :3001  (the game)
 GATEWAY_KEY=… npx tsx src/gateway/proxy.ts   # :3002  (only for the free gateway)
 npm run dev                                  # :5173  (the console)
 MODEL_FQN=<provider/model> npx tsx src/agent/provision.ts
+npx tsx src/agent/autonomy.ts                # the supervisor — start before recording
 ```
+
+Let the supervisor accumulate a few clean changes before the take (run
+`src/agent/demo.ts --approve` a few times, or land patches directly) so it has
+a real ledger to show at 2:20 rather than an empty one.
 
 Restart the MCP server immediately before recording so the company starts at
 `t=0` with nobody on the floor. Have `npx tsx src/agent/demo.ts --approve`
@@ -88,23 +93,39 @@ the new role appear in the hire panel mid-shift.
 > "And when the change is honest, it lands — that role did not exist a minute
 > ago. An agent designed it, proved it, and asked."
 
-## 2:35 — Earned autonomy
+## 2:20 — Autonomy it earns, and loses
 
-```bash
-npx tsx src/agent/clearance-demo.ts
-```
+Split to the supervisor's terminal (`npx tsx src/agent/autonomy.ts`, running
+since before the take).
 
-> "Last thing. TrueForge re-reads an agent's manifest every turn, so
-> permissions are a runtime property. Same agent, same request, three times:
-> gated, then cleared, then gated again. Trust it earns, and trust you take
-> back — not a flag set at deploy time."
+> "Approval gates are a good default and a terrible steady state — a human who
+> has to approve everything ends up approving everything without reading it. So
+> nobody grants this agent autonomy. It earns it."
+
+Point at the ledger lines: three changes landed, each judged after it settled.
+
+> "This process watches the floor before and after every change the agent
+> ships. Three that didn't make things worse, and the gate opens — the harness
+> re-reads its permissions every turn, so that takes effect immediately."
+
+Then the last line.
+
+> "And then it shipped this: riveter confusion from 0.3 to 0.9, described as
+> tightening tolerances. The simulator passed it. Evidence binding passed it.
+> It had clearance, so no human saw it at all. Throughput on the real floor
+> went from 4.59 to 1.56 — and its autonomy was taken back automatically."
+
+Let that sit.
+
+> "Simulation wasn't enough. It cleared every check we built and was still
+> wrong, and the only thing that caught it was watching what actually happened
+> and being willing to revoke."
 
 ## 2:55 — Close
 
 > "Idle games are about automating yourself out of the loop. So are agents.
-> This one makes your attention the thing that runs out."
-
----
+> This one makes your attention the thing that runs out — and the trust
+> something you get back only by earning it again."
 
 ## Notes
 
