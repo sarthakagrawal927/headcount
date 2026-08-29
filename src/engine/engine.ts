@@ -58,6 +58,32 @@ export function coordinationMultiplier(
   return 1 + k * ((span - limit) / limit);
 }
 
+/**
+ * Diminishing returns past a soft cap.
+ *
+ * Only the units beyond the threshold are discounted, so a cap slows a
+ * strategy down rather than ending it — the point is to retire a dominant
+ * option, not to delete it.
+ */
+export function softCapMultiplier(role: Role, state: GameState): number {
+  const cap = role.softCap;
+  if (!cap) return 1;
+
+  const counted =
+    cap.when === 'queueAbove' ? state.queue : (state.headcount[role.id] ?? 0);
+  if (counted <= cap.threshold) return 1;
+
+  if (cap.when === 'queueAbove') return cap.throughputMultiplier;
+
+  // Headcount caps apply to the excess only: the first `threshold` units are
+  // unaffected, so crossing it is a bend in the curve and not a cliff.
+  const owned = state.headcount[role.id] ?? 0;
+  if (owned === 0) return 1;
+  const full = cap.threshold;
+  const excess = owned - full;
+  return (full + excess * cap.throughputMultiplier) / owned;
+}
+
 /** Effective confusion for a role after SOPs, tenure and coordination. */
 export function effectiveConfusion(
   role: Role,
@@ -146,7 +172,8 @@ export function step(
     const owned = state.headcount[role.id] ?? 0;
     if (owned === 0) continue;
 
-    const roleTasks = owned * activeFraction * role.throughput * dt;
+    const roleTasks =
+      owned * activeFraction * role.throughput * softCapMultiplier(role, state) * dt;
     const level = state.tenure[role.id] ?? 0;
     const rung = pack.tenureLadder[Math.min(level, pack.tenureLadder.length - 1)];
 

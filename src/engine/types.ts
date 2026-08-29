@@ -33,6 +33,30 @@ export interface Role {
   baseCost: number;
   /** Geometric price growth per unit owned: cost = baseCost * growth^owned. */
   costGrowth: number;
+  /**
+   * Diminishing returns past a threshold.
+   *
+   * Added because the agent kept *describing* soft caps it could not build —
+   * "throughput caps at 2.5/sec once the queue exceeds 10" — and writing them
+   * into a role's blurb, where they read convincingly and did nothing. A pack
+   * that cannot express the mechanic an agent reaches for does not prevent the
+   * mechanic; it just moves it into prose nobody validates.
+   */
+  softCap?: SoftCap;
+}
+
+/**
+ * A soft cap retires a dominant strategy without removing it: past the
+ * threshold each unit still contributes, just less. That is the shape the
+ * genre uses to keep an option good rather than mandatory.
+ */
+export interface SoftCap {
+  /** What is being counted. */
+  when: 'headcountAbove' | 'queueAbove';
+  /** The count past which returns diminish. */
+  threshold: number;
+  /** Multiplier applied to this role's output beyond the threshold. 0..1 */
+  throughputMultiplier: number;
 }
 
 /** A written procedure that reduces how often a role gets confused. */
