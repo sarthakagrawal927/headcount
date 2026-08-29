@@ -50,13 +50,25 @@ function buyOnce(
     return state;
   }
 
-  // Greedy: the classic idle-game optimum — best income-to-cost ratio available.
-  let best: { ratio: number; apply: () => GameState } | null = null;
+  // Greedy on marginal return per unit of cash — but over EVERY option, not
+  // only the ones currently affordable.
+  //
+  // Considering just what it can afford right now looks like greed and is
+  // actually myopia: cheap producers are always affordable, so the run spends
+  // every dollar the moment it arrives and never accumulates enough for the
+  // expensive structural purchase that would raise the ceiling. It hires
+  // seventeen workers and never buys the supervisor worth seven of them.
+  //
+  // That was not a balance quirk. It made simulation blind to precisely the
+  // changes the agent proposes most — new supervisor tiers — so a patch adding
+  // one scored identically to no patch at all, and the evidence the agent cited
+  // was uninformative. Saving for the best option is both better play and the
+  // only way the simulator can see the design.
+  let best: { ratio: number; cost: number; apply: () => GameState } | null = null;
 
   for (const role of pack.roles) {
     const owned = state.headcount[role.id] ?? 0;
     const cost = unitCost(role, owned);
-    if (cost > state.cash) continue;
     // Supervisors earn nothing directly; value them by attention relieved.
     const marginal =
       role.tier === 1
@@ -66,6 +78,7 @@ function buyOnce(
     if (!best || ratio > best.ratio) {
       best = {
         ratio,
+        cost,
         apply: () => {
           const r = hire(state, pack, role.id);
           return r.ok ? r.state : state;
@@ -76,7 +89,6 @@ function buyOnce(
 
   for (const sop of pack.sops) {
     if (state.sops.includes(sop.id)) continue;
-    if (sop.cost > state.cash) continue;
     // Value an SOP by the questions it stops from ever being asked.
     const role = pack.roles.find((r) => r.id === sop.roleId);
     if (!role) continue;
@@ -87,6 +99,7 @@ function buyOnce(
     if (!best || ratio > best.ratio) {
       best = {
         ratio,
+        cost: sop.cost,
         apply: () => {
           const r = buySop(state, pack, sop.id);
           return r.ok ? r.state : state;
@@ -95,7 +108,10 @@ function buyOnce(
     }
   }
 
-  return best ? best.apply() : state;
+  // Save rather than settle: if the best available purchase cannot be afforded
+  // yet, buy nothing this tick.
+  if (!best || best.cost > state.cash) return state;
+  return best.apply();
 }
 
 export interface RunResult {

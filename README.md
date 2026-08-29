@@ -29,7 +29,7 @@ structurally incapable of it. Here is a real 900-second run of the engine:
 | --------------------------------- | ------------ | ----- | ---- |
 | hire-only                         | 4.56 → 1.67  | 23    | 21   |
 | SOP only                          | 4.67 → 3.16  | 25    | 22   |
-| builds management structure       | 29.0 → 29.0  | 33    | 0    |
+| builds management structure       | 29.0 → 29.0  | 32    | 0    |
 
 You hired 23 people and 21 of them are standing around waiting for you to
 answer a question. The hire-only strategy doesn't plateau — it **declines**,
