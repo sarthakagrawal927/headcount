@@ -11,7 +11,7 @@
 
 import type { TrueForgeApi } from '@truefoundry/trueforge-sdk';
 
-import { OPENUI_DASHBOARD_INSTRUCTIONS } from './openui.js';
+import { OPENUI_DASHBOARD_INSTRUCTIONS_COMPACT } from './openui.js';
 
 /** Name of the MCP server as registered in TrueForge (Settings → Connectors). */
 export const MCP_SERVER_NAME = process.env.HEADCOUNT_MCP_NAME ?? 'headcount';
@@ -207,7 +207,7 @@ Design taste for this game:
 You may spawn subagents to playtest competing policies in parallel and report their scores back. Ask the human
 questions when a design choice is a matter of taste rather than evidence.
 
-${OPENUI_DASHBOARD_INSTRUCTIONS}`;
+${OPENUI_DASHBOARD_INSTRUCTIONS_COMPACT}`;
 
 /** The MCP server registration. TrueForge attaches MCP servers by URL, not stdio. */
 export function buildMcpServerManifest(url: string = MCP_URL): TrueForgeApi.McpServerManifest {
@@ -268,10 +268,17 @@ export function buildAgentManifest(options: ManifestOptions = {}): TrueForgeApi.
     mcpServers: [
       {
         name: mcpServerName,
-        // Load every tool schema up front: there are seven of them and the
-        // agent needs the whole design surface in view to reason about it.
         enableTools: ['@all'],
-        preload: true,
+        // Deferred tool loading. Only the server's name and description sit in
+        // context; individual schemas are fetched when the agent decides it
+        // needs one. Seven tools with descriptions written for a model to read
+        // is a lot of prompt, and preloading them pushed a single request past
+        // the 8,000 tokens-per-minute ceiling on the free gateway — the agent
+        // could not be shown the game it was designing. The two tools it needs
+        // on the first turn are preloaded by name so the common path costs no
+        // extra round trip.
+        preload: false,
+        preloadTools: ['get_state', 'get_telemetry'],
         requireApprovalForTools,
       },
     ],
