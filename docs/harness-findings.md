@@ -118,3 +118,17 @@ Nothing was broken, but the debugging lesson is real: with runtime-mutable
 permissions, reading the current policy tells you nothing about the policy a
 past turn executed under. Log the gate as it was at the time, or you will
 diagnose the wrong thing.
+
+## Prompt budget is a real constraint, and preload is where it goes
+
+With seven MCP tools whose descriptions are written for a model to read, plus a
+skill, plus the harness's own guidance for sandbox, subagents and generative
+UI, a single first turn reached 12,132 tokens. On a gateway capped at 8,000
+tokens per minute that is not a slow agent, it is an agent that cannot be shown
+the game it is designing — every request returns 413.
+
+`preload: false` with `preloadTools` naming the two tools needed on the first
+turn brought it to about 5,700, keeping the common path free of an extra round
+trip. Worth measuring before assuming a small model is the problem: our own
+prompt fragment was 40% of the system prompt, and the harness contributes
+roughly 8k characters before you write anything.

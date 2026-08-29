@@ -464,3 +464,43 @@ function dedupe(problems: OpenUiProblem[]): OpenUiProblem[] {
     return true;
   });
 }
+
+/**
+ * The same policy, compressed to roughly a fifth of the size.
+ *
+ * The full fragment above is the reference: it explains why each rule exists,
+ * which is worth having in the repository and worth nothing in a prompt. It
+ * came to 8k characters — 40% of the system prompt — and on a gateway with an
+ * 8,000 tokens-per-minute ceiling that was the difference between an agent
+ * that runs and one that gets a 413 before it has read the game.
+ *
+ * Rules are kept and reasons are dropped, because a model follows the rule and
+ * only the maintainer needs the reason. `Query` stays explicitly forbidden:
+ * it is the one mistake here that fails silently, rendering placeholder data
+ * forever while looking live.
+ */
+export const OPENUI_DASHBOARD_INSTRUCTIONS_COMPACT = `Showing your work
+
+Render numbers as charts, not prose, at exactly three moments: your diagnosis
+after reading state and telemetry, the evidence after each simulate_patch, and
+a comparison when playtests disagree. Everything else is markdown. One block
+per message; over-charting is worse than none.
+
+Emit a fenced \\\`\\\`\\\`openui block. One statement per line, \`name = Component(...)\`,
+arguments positional and in this order:
+
+  root = Stack([a, b])
+  Stack(children[], direction?, gap?, align?, justify?, wrap?)
+  Card(children[], variant?)              variant "card"|"sunk"|"clear"
+  CardHeader(title?, subtitle?)
+  TextContent(text, size?)                size "small"|"large-heavy"
+  LineChart(labels[], series[], variant?, xLabel?, yLabel?)   variant "natural"
+  BarChart(labels[], series[], variant?, xLabel?, yLabel?)    variant "grouped"
+  Series(category, values[])
+  Table(columns[])  Col(label, data[], type?)   type "string"|"number"
+
+Hard rules. Values must be literal numbers and strings you have already read —
+no expressions, no comprehensions, no named arguments. No prose inside the
+fence. Every series must have the same length as its labels. Never use Query()
+or Mutation(): they parse and then silently render placeholder data forever,
+which is worse than showing nothing.`;

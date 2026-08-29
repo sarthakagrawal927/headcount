@@ -34,6 +34,7 @@ if [[ "${1:-}" == "--fresh" ]]; then
   echo "restarting the game server so the floor starts empty"
   pkill -f "tsx src/mcp/server.ts" 2>/dev/null
   sleep 1
+  FRESH=1
 fi
 
 echo "HEADCOUNT stack"
@@ -48,7 +49,14 @@ else
   echo "  shim skipped (no GATEWAY_KEY — expected if using a real provider)"
 fi
 
-start game 3001 /health npx tsx src/mcp/server.ts
+# --fresh means a demo is about to be recorded, and the opening beat of the
+# genre is being the only person on the line. Without this the company plays
+# itself and you are never alone on the floor.
+if [[ "${FRESH:-}" == "1" ]]; then
+  HEADCOUNT_AUTOPLAY=0 start game 3001 /health npx tsx src/mcp/server.ts
+else
+  start game 3001 /health npx tsx src/mcp/server.ts
+fi
 start console 5173 "" npx vite --port 5173 --strictPort
 
 echo

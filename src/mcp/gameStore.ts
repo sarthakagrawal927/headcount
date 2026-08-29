@@ -20,6 +20,9 @@ import {
 import type { ContentPatch } from './schemas.js';
 
 const TICK_DT = 0.25;
+
+/** Whether the company plays itself when nobody is driving it. */
+const AUTOPLAY = process.env.HEADCOUNT_AUTOPLAY !== '0';
 /** Never fast-forward more than this after a pause; a stalled process should not teleport. */
 const MAX_CATCHUP_SECONDS = 30;
 const TELEMETRY_CAP = 1200;
@@ -57,8 +60,13 @@ export async function getGame(): Promise<LiveGame> {
     state: seedState(pack, engine.createInitialState),
     telemetry: [],
     // A default policy so the company is actually running when the agent
-    // first looks at it. Greedy is the naive optimiser: it hires into the wall.
-    policy: { mode: 'greedy', label: 'default-greedy' },
+    // first looks at it — an idle game nobody is playing has nothing to
+    // diagnose. Set HEADCOUNT_AUTOPLAY=0 to start with an empty floor
+    // instead, which is what a demo wants: the opening beat of the genre is
+    // being the only person on the line.
+    policy: AUTOPLAY
+      ? { mode: 'greedy', label: 'default-greedy' }
+      : { mode: 'scripted', script: [], label: 'manual' },
     policySetAt: null,
     patchLog: [],
     lastWallClock: Date.now(),
