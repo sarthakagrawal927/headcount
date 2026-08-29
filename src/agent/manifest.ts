@@ -278,7 +278,13 @@ export function buildAgentManifest(options: ManifestOptions = {}): TrueForgeApi.
         // on the first turn are preloaded by name so the common path costs no
         // extra round trip.
         preload: false,
-        preloadTools: ['get_state', 'get_telemetry'],
+        // The four it actually invokes are preloaded by name. Deferring
+        // apply_patch turned out to be a false economy: the agent called it
+        // without having fetched its schema and omitted two required fields,
+        // so the turn reached the approval gate, a human approved it, and it
+        // then failed validation. A tool the agent is expected to call needs
+        // its arguments in view before it calls it.
+        preloadTools: ['get_state', 'get_telemetry', 'simulate_patch', 'apply_patch'],
         requireApprovalForTools,
       },
     ],
