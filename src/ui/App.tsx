@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useGame } from './useGame';
+import { AgentFeed } from './components/AgentFeed';
 import { AttentionMeter } from './components/AttentionMeter';
 import { Footer } from './components/Footer';
 import { OrgChart } from './components/OrgChart';
@@ -63,12 +64,20 @@ export function App() {
           <ThroughputChart history={game.history} answerRate={game.content.playerAnswerRate} />
         </div>
 
-        <QueuePanel
-          questions={game.questions}
-          hiddenQueue={game.hiddenQueue}
-          now={game.state.t}
-          onAnswer={actions.answer}
-        />
+        {/* Two things want the player's attention, and they are not the same
+            kind of thing: the queue is work only a human can do, the feed is
+            work an agent already did and a human already approved. Stacking
+            them in one column makes the trade visible — the game is changing
+            underneath you while you answer. */}
+        <div className="col col--right">
+          <QueuePanel
+            questions={game.questions}
+            hiddenQueue={game.hiddenQueue}
+            now={game.state.t}
+            onAnswer={actions.answer}
+          />
+          <AgentFeed />
+        </div>
       </div>
 
       <Footer
