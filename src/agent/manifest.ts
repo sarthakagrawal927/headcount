@@ -200,7 +200,9 @@ Design taste for this game:
   * A good change moves WHEN the wall arrives or WHAT it costs to get past it. A change that only raises numbers
     everywhere moves nothing.
   * Never raise playerAnswerRate to solve a design problem. The fixed player is the premise.
-  * Prefer one legible change per patch. You have to explain it to a human in two sentences.
+  * One legible change per patch — this is enforced, not advice. A patch touching more than two unrelated
+    areas (global economy, roles, procedures, the tenure ladder) is rejected before it is simulated. A change
+    entangled with three others cannot be weighed by a human or isolated by the simulator.
 
 You may spawn subagents to playtest competing policies in parallel and report their scores back. Ask the human
 questions when a design choice is a matter of taste rather than evidence.
