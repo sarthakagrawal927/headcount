@@ -16,17 +16,13 @@ never scales: a human's attention. HEADCOUNT makes that the economy. Then it
 hands the design of the game to an agent, which must prove every change in
 simulation and ask a human before it can touch anything.
 
-![The operations console at the attention wall: escalations arriving at 1.00/sec against a fixed ceiling of 1.00, 76% of the workforce blocked, nine questions queued](docs/images/console-at-the-wall.png)
+![The HEADCOUNT operations console: escalations arriving at 1.02 questions per second against a fixed ceiling of 1.00, 65% of the workforce blocked, five questions queued, and an agent activity panel showing two approved design changes](docs/images/console-at-the-wall.png)
 
-*Twelve people on the floor. Nine of them are standing still waiting for you to
-answer a question — and `Quality Inspector`, in the hire panel, is a role an
-agent designed, proved in simulation and asked permission to add.*
-
-> **The result we'd point a judge at.** The agent once shipped a change that
-> passed simulation, passed evidence binding, and applied with **no human
-> involved at all** — because it had earned that autonomy. Throughput on the
-> real floor then fell by two thirds, and its clearance was revoked
-> automatically. Simulation was not sufficient. → [Earned autonomy](#earned-autonomy)
+*Nine people on the floor and six of them standing still, waiting for you to
+answer a question. On the right, two changes an agent designed: a soft cap it
+proved in simulation, and `Quality Inspector` — a supervisor role that did not
+exist when the game started. Both were argued for, measured, and approved
+before they landed.*
 
 ## The one equation
 
@@ -269,6 +265,9 @@ Qodo reviews every pull request on this repository. Substantive work goes
 through a branch and a PR; nothing meaningful lands on `main` unreviewed.
 
 **Representative PR: [#2 — Test the judgement that governs autonomy](https://github.com/sarthakagrawal927/headcount/pull/2)**
+(its review thread; the work merged as
+[#4](https://github.com/sarthakagrawal927/headcount/pull/4) after #2 was
+auto-closed when the branch it was stacked on was deleted on merge)
 
 Qodo raised **six findings, four marked High**, and every one landed in
 `src/agent/autonomy.ts` — the file whose entire job is deciding whether an
@@ -303,8 +302,8 @@ both alternatives it offered and recorded why the checked-in JSONL ledger stays
 and a transactional store would trade that legibility for concurrency
 guarantees a single-supervisor system does not need.
 
-**[PR #1](https://github.com/sarthakagrawal927/headcount/pull/1)** returned
-clean from Qodo: 0 bugs, 0 rule violations, 0 requirement gaps. It had earlier
+**[PR #1](https://github.com/sarthakagrawal927/headcount/pull/1)** (merged)
+returned clean from Qodo: 0 bugs, 0 rule violations, 0 requirement gaps. It had earlier
 taken a separate finding — the suite exercised only the `degenerate` failure
 shape and never `stalled`, which would have let a regression in stall detection
 mint apparently-playable evidence for a collapsed design — closed before Qodo's
