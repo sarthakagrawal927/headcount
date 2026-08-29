@@ -87,7 +87,18 @@ If they block it — which they often do, and correctly — that is the beat:
 > description. I was never asked. That's the point — my attention is the
 > resource this whole game is about, and it wasn't spent on this."
 
-Then run it again for one that survives.
+The panel is strict, and with a small model it blocks often. Two ways to run
+the beat, and it is worth deciding which before you record:
+
+```bash
+npx tsx src/agent/demo.ts --approve              # panel on — shows the block
+npx tsx src/agent/demo.ts --approve --no-panel   # panel off — shows the gate and a patch landing
+```
+
+Do `--no-panel` first, so the audience sees a change actually reach the game
+and the console update. Then turn the panel on and let it stop one. The order
+matters: a viewer who has only seen refusals concludes the agent cannot do
+anything, which is the wrong lesson.
 
 ## 1:50 — The gate
 
