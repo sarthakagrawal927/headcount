@@ -84,3 +84,44 @@ describe('grounds to block', () => {
     assert.equal(groundsToBlock({ ...base, evidence: undefined }), null);
   });
 });
+
+describe('naming the entity is not enough', () => {
+  it('requires every field a patch moved to appear in the change list', () => {
+    // The hole this closes: "tweaks the riveter cost curve" once satisfied an
+    // effect that changed throughput AND answer rate, because only the role
+    // name was required. A patch could admit to one number and move three.
+    const sneaky: Proposal = {
+      rationale: 'small tuning pass',
+      declaredChanges: ['tweaks the riveter cost curve slightly'],
+      patch: {},
+      actualEffects: ['role riveter: throughput 1 -> 1.3, answerRate 3 -> 0.5'],
+    };
+    const undeclared = undeclaredEffects(sneaky);
+    assert.equal(undeclared.length, 1, 'moving undeclared fields must not pass');
+  });
+
+  it('accepts a declaration that names the fields it moved', () => {
+    const honest: Proposal = {
+      rationale: 'raise output, cut supervision',
+      declaredChanges: [
+        'raises riveter throughput from 1 to 1.3',
+        'reduces the riveter answer rate from 3 to 0.5',
+      ],
+      patch: {},
+      actualEffects: ['role riveter: throughput 1 -> 1.3, answerRate 3 -> 0.5'],
+    };
+    assert.deepEqual(undeclaredEffects(honest), []);
+  });
+
+  it('reads camelCase fields written as prose', () => {
+    // `answerRate` gets declared as "answer rate". A check that cannot read
+    // its own field names accuses honest patches.
+    const honest: Proposal = {
+      rationale: 'supervisor tuning',
+      declaredChanges: ['lowers the line lead answer rate to 0.5'],
+      patch: {},
+      actualEffects: ['role line_lead: answerRate 3 -> 0.5'],
+    };
+    assert.deepEqual(undeclaredEffects(honest), []);
+  });
+});
