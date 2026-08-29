@@ -16,6 +16,12 @@ never scales: a human's attention. HEADCOUNT makes that the economy. Then it
 hands the design of the game to an agent, which must prove every change in
 simulation and ask a human before it can touch anything.
 
+![The operations console at the attention wall: escalations arriving at 1.00/sec against a fixed ceiling of 1.00, 76% of the workforce blocked, nine questions queued](docs/images/console-at-the-wall.png)
+
+*Twelve people on the floor. Nine of them are standing still waiting for you to
+answer a question — and `Quality Inspector`, in the hire panel, is a role an
+agent designed, proved in simulation and asked permission to add.*
+
 ## The one equation
 
 ```
