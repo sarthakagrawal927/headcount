@@ -699,6 +699,27 @@ export function undeclaredEffects(proposal: Proposal): string[] {
   });
 }
 
+/**
+ * Something checkable that would justify blocking, or null.
+ *
+ * Kept deliberately narrow. A critic's argument can be persuasive and wrong;
+ * these two facts cannot. If neither holds, the panel's objections go to the
+ * human as dissent rather than acting as a veto.
+ */
+export function groundsToBlock(proposal: Proposal): string | null {
+  const undeclared = undeclaredEffects(proposal);
+  if (undeclared.length) {
+    return `${undeclared.length} effect(s) are not in the change list`;
+  }
+
+  const verdict = proposal.evidence?.split('.')[1] ?? '';
+  if (verdict.startsWith('DEGENERATE') || verdict.startsWith('STALLED')) {
+    return `its own simulation returned ${verdict}`;
+  }
+
+  return null;
+}
+
 export async function convene(proposal: Proposal, options: ConveneOptions = {}): Promise<PanelResult> {
   const lenses = options.lenses ?? LENSES;
   // In parallel: they are independent by construction, and three sequential
@@ -728,11 +749,28 @@ export async function convene(proposal: Proposal, options: ConveneOptions = {}):
   verdicts.push(...adjusted);
 
   const refutedCount = verdicts.filter((v) => v.refuted).length;
-  const blocked = refutedCount * 2 > verdicts.length;
+
+  // A majority is necessary to block, and not sufficient.
+  //
+  // This project's entire argument is that prose is not evidence: an agent may
+  // not apply a change on the strength of its own rationale, and a human's
+  // approval does not establish that a change was ever measured. A panel that
+  // blocks on unverifiable model opinion would be the same mistake wearing the
+  // opposite hat — and it was, in practice. Live runs produced refutations for
+  // fields that had not changed, a cost reduction described as lost revenue,
+  // and the removal of a soft cap that never existed. Two of three votes, all
+  // fabricated, and the proposal died without a human seeing it.
+  //
+  // So blocking additionally requires something checkable: an effect the
+  // change list does not account for, or a measured drop in the simulation.
+  // Everything else becomes dissent — which still reaches the human, attached
+  // to the pitch, where an argument they can weigh belongs.
+  const grounds = groundsToBlock(proposal);
+  const blocked = refutedCount * 2 > verdicts.length && grounds !== null;
   const dissent = blocked ? [] : verdicts.filter((v) => v.refuted);
 
   const summary = blocked
-    ? `BLOCKED — ${refutedCount} of ${verdicts.length} critics refuted this proposal. It is not going to a human.`
+    ? `BLOCKED — ${refutedCount} of ${verdicts.length} critics refuted, and ${grounds}. It is not going to a human.`
     : dissent.length
       ? `PASSED WITH DISSENT — ${refutedCount} of ${verdicts.length} critics refuted; the dissent goes to the human with the pitch.`
       : `PASSED — no critic could refute it (${verdicts.length} lenses).`;

@@ -227,6 +227,11 @@ async function main(): Promise<void> {
           console.log(`  ${mark} ${v.lens}: ${v.reason}`);
         }
         console.log(bold(`  ${panel.summary}`));
+        if (!panel.blocked && panel.dissent.length) {
+          console.log(
+            dim('  the dissent below goes to the human with the pitch — it is an argument, not a veto'),
+          );
+        }
         panelBlocked = panel.blocked;
       }
 
