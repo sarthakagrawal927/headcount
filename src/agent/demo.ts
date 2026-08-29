@@ -76,6 +76,7 @@ async function main(): Promise<void> {
 
   const events = new Map<string, any>();
   const pending: any[] = [];
+  const questions: any[] = [];
 
   const runTurn = async (message: string): Promise<void> => {
   const stream = await client.sessions.createTurnStream(sessionId, {
@@ -121,6 +122,12 @@ async function main(): Promise<void> {
       case 'tool.approval_required':
         pending.push(event);
         break;
+      case 'tool.response_required':
+        // A clarifying question is also a pause, and a session with any pause
+        // outstanding rejects the next user message. Nudging into one throws a
+        // 422 and takes the run down.
+        questions.push(event);
+        break;
       case 'turn.done':
         console.log(dim(`\n[turn ${(event as any).state?.status}]`));
         break;
@@ -128,7 +135,34 @@ async function main(): Promise<void> {
   }
   };
 
+  /** Answer anything the agent asked, so the next turn is accepted. */
+  const clearQuestions = async (): Promise<void> => {
+    while (questions.length) {
+      const q = questions.shift();
+      for (const ref of q.toolCalls ?? []) {
+        try {
+          const stream = await client.sessions.createTurnStream(sessionId, {
+            input: [
+              {
+                type: 'user.tool_response',
+                threadId: q.threadId ?? 'main',
+                toolCallId: ref.id,
+                content: 'Use your judgement and proceed.',
+              } as any,
+            ],
+          });
+          for await (const _ of stream.withMetadata()) {
+            // drain
+          }
+        } catch {
+          // Nothing more to do here; the next turn will surface the failure.
+        }
+      }
+    }
+  };
+
   await runTurn(BRIEF);
+  await clearQuestions();
 
   // Smaller models routinely stop after reporting a good simulation instead of
   // acting on it, and sometimes never reach the tool at all. Nudges escalate
@@ -144,6 +178,7 @@ async function main(): Promise<void> {
     if (pending.length) break;
     console.log(dim(`\n— nudging —\n`));
     await runTurn(nudge);
+    await clearQuestions();
   }
 
   if (!pending.length) {
