@@ -4,7 +4,7 @@
  */
 
 import type { ContentPack, GameState } from './types.js';
-import { unitCost } from './engine.js';
+import { prestigeGain, unitCost } from './engine.js';
 
 export type ActionResult =
   | { ok: true; state: GameState }
@@ -80,6 +80,55 @@ export function grantTenure(
       ...state,
       cash: state.cash - cost,
       tenure: { ...state.tenure, [roleId]: nextLevel },
+    },
+  };
+}
+
+/**
+ * Reset the company, keeping only what the reset itself earned.
+ *
+ * Everything the player built goes: headcount, procedures, tenure, cash. What
+ * survives is the prestige points and the permanent multiplier they carry, so
+ * the second run is faster than the first and the third faster again.
+ *
+ * Lifetime earnings are deliberately NOT reset. The gain formula reads from
+ * them, so clearing them would mean a player who resets twice at the same
+ * point is paid twice for the same progress — which turns a reset layer into
+ * a treadmill that rewards resetting rather than growing.
+ */
+export function prestige(state: GameState, pack: ContentPack): ActionResult {
+  if (!pack.prestige) {
+    return { ok: false, reason: 'this game has no reset layer' };
+  }
+
+  const gain = prestigeGain(pack, state);
+  if (gain <= 0) {
+    return {
+      ok: false,
+      reason: 'resetting now would bank nothing — earn more before starting over',
+    };
+  }
+
+  const headcount: Record<string, number> = {};
+  const tenure: Record<string, number> = {};
+  for (const role of pack.roles) {
+    headcount[role.id] = 0;
+    tenure[role.id] = 0;
+  }
+
+  return {
+    ok: true,
+    state: {
+      ...state,
+      t: state.t,
+      cash: 0,
+      headcount,
+      tenure,
+      sops: [],
+      queue: 0,
+      defects: 0,
+      prestigePoints: state.prestigePoints + gain,
+      prestigeCount: state.prestigeCount + 1,
     },
   };
 }

@@ -70,6 +70,15 @@ export const ContentPatchSchema = z.object({
     .describe('Questions per second the player can personally answer.'),
   clickRevenue: z.number().min(0).optional().describe('Cash for a task the player completes by hand.'),
   incidentThreshold: z.number().min(1).optional().describe('Defects tolerated before an incident claws a tenure rung back.'),
+
+  prestige: z.object({
+    currencyName: z.string().describe('What the player earns by resetting. Flavour; the maths is the exponent.'),
+    exponent: z.number().min(0.05).max(1)
+      .describe('points = floor((lifetimeCash / scale) ** exponent). 0.5 needs 4x to double, 0.33 needs 8x, 0.14 needs 128x. This one number sets the length of a run.'),
+    scale: z.number().min(1).describe('Divisor applied before the exponent; sets when a first reset first pays.'),
+    bonusPerPoint: z.number().min(0).max(1).describe('Permanent throughput multiplier per point: 1 + points * this.'),
+  }).optional()
+    .describe('A reset layer: the player trades everything built for a permanent multiplier. State the exponent explicitly and justify it against the run length you intend.'),
 }).describe('A diff against the active ContentPack. Everything omitted stays as it is.');
 
 export const PlayPolicySchema = z.object({

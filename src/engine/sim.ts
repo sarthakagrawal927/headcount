@@ -10,8 +10,8 @@
  */
 
 import type { ContentPack, GameState, Telemetry } from './types.js';
-import { step, unitCost } from './engine.js';
-import { buySop, grantTenure, hire } from './actions.js';
+import { prestigeGain, step, unitCost } from './engine.js';
+import { buySop, grantTenure, hire, prestige } from './actions.js';
 
 export interface PlayPolicy {
   /** `greedy` buys the best marginal revenue per cash at every opportunity. */
@@ -154,6 +154,7 @@ export function simulate(
   const steps = Math.max(1, Math.round(seconds / dt));
 
   for (let i = 0; i < steps; i++) {
+    state = maybePrestige(state, pack);
     state = buyOnce(state, pack, policy);
     const r = step(state, pack, dt);
     state = r.state;
@@ -161,6 +162,37 @@ export function simulate(
   }
 
   return { telemetry, final: state, score: scoreRun(telemetry, state, pack) };
+}
+
+/**
+ * Reset when it is clearly worth it.
+ *
+ * Without this the simulated player never resets, so a proposed reset layer
+ * scores identically to no layer at all and the agent's evidence says nothing
+ * about the thing it is proposing — the same blindness that once made a
+ * supervisor patch indistinguishable from an empty one.
+ *
+ * The rule is deliberately crude, because a precise optimal-reset policy is a
+ * research problem and the question here is only whether the layer does
+ * anything: reset when doing so would raise the permanent multiplier by at
+ * least half, and never on the first tick.
+ */
+function maybePrestige(state: GameState, pack: ContentPack): GameState {
+  if (!pack.prestige || state.t <= 0) return state;
+  const gain = prestigeGain(pack, state);
+  if (gain <= 0) return state;
+  if (state.prestigePoints > 0 && gain < state.prestigePoints * 0.5) return state;
+
+  const result = prestige(state, pack);
+  if (!result.ok) return state;
+
+  // A reset leaves nothing, and a simulated player has no hands. In the real
+  // game you work the line yourself back up to the first hire; without
+  // modelling that, every reset ends the run at zero and a prestige layer
+  // scores as a catastrophe rather than a trade. Seed the same bootstrap the
+  // run started with.
+  const bootstrap = Math.min(...pack.roles.map((r) => r.baseCost));
+  return { ...result.state, cash: bootstrap, lifetimeCash: result.state.lifetimeCash + bootstrap };
 }
 
 function createSeedState(pack: ContentPack): GameState {
@@ -183,6 +215,8 @@ function createSeedState(pack: ContentPack): GameState {
     queue: 0,
     answered: 0,
     incidents: 0,
+    prestigePoints: 0,
+    prestigeCount: 0,
     seed: 1,
   };
 }

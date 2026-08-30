@@ -83,6 +83,37 @@ export interface TenureLevel {
   cost: number;
 }
 
+/**
+ * A reset layer: trade everything for a permanent multiplier.
+ *
+ * The design skill teaches this in detail — square root means you need 4x to
+ * double your prestige currency, cube root 8x, and Egg Inc.'s 0.14 exponent
+ * means 128x — and until now the pack could not express one at all, so an
+ * agent reaching for a reset layer could only describe it.
+ *
+ * The exponent is the whole design. It sets how long a run lasts and how much
+ * a second one is worth, and choosing it is exactly the kind of judgement that
+ * has to be made under simulation rather than argued for.
+ */
+export interface PrestigeLayer {
+  /** What the player earns by resetting. Flavour only; the maths is below. */
+  currencyName: string;
+  /**
+   * Applied to lifetime earnings to yield prestige points:
+   * `points = floor((lifetimeCash / scale) ** exponent)`.
+   *
+   * 0.5 is forgiving, 0.33 is the common default, 0.14 is punishing.
+   */
+  exponent: number;
+  /** Divisor applied before the exponent, setting when a first reset pays. */
+  scale: number;
+  /**
+   * Permanent throughput multiplier per point, compounding across resets:
+   * `1 + points * bonusPerPoint`.
+   */
+  bonusPerPoint: number;
+}
+
 export interface ContentPack {
   version: number;
   roles: Role[];
@@ -100,6 +131,8 @@ export interface ContentPack {
    * real org-design term, and the stat the whole game is fighting.
    */
   spanOfControl?: number;
+  /** Optional reset layer. Absent means the game has no prestige. */
+  prestige?: PrestigeLayer;
   /**
    * Brooks's Law coefficient. How sharply confusion rises once span of control
    * is exceeded — past the limit, each extra hire makes everyone else more
@@ -128,6 +161,10 @@ export interface GameState {
   answered: number;
   /** Incidents triggered by defect accumulation (tenure clawbacks). */
   incidents: number;
+  /** Prestige points banked across all resets. */
+  prestigePoints: number;
+  /** How many times the player has reset. */
+  prestigeCount: number;
   /** Deterministic RNG cursor. */
   seed: number;
 }

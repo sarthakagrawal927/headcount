@@ -80,6 +80,13 @@ same point — that property is a design choice, not a bug.
 State the exponent explicitly in any reset-layer proposal, and justify it
 against the intended session length.
 
+Build it with the pack's `prestige` field — `currencyName`, `exponent`,
+`scale`, `bonusPerPoint`. Points are `floor((lifetimeCash / scale) ** exponent)`
+and each one adds `bonusPerPoint` to a permanent throughput multiplier. A reset
+clears headcount, procedures, tenure and cash but not lifetime earnings, so
+resetting twice at the same point pays once — the reward is for growing, not
+for resetting.
+
 ## Taxonomy of structural novelty
 
 Incrementing a generator is not design. A genuine addition changes the *shape*
@@ -102,7 +109,8 @@ you are attempting, and say so:
   somewhere to spend.
 - **Subgame with different physics** — a bounded system obeying its own rules
   (a hiring market, a defect backlog, a training pipeline).
-- **Reset layer** — trade current progress for a permanent multiplier.
+- **Reset layer** — trade current progress for a permanent multiplier. Build it
+  with the pack's `prestige` field; the exponent is the design.
 
 ## Rejecting your own proposals
 
@@ -138,8 +146,9 @@ If the numbers disagree with your intention, report the numbers.
 ## What the pack can and cannot express
 
 The ContentPack is data. It can express roles and their rates, procedures that
-reduce confusion, tenure rungs, cost curves, span-of-control pressure and soft
-caps. It cannot express conditional logic of any other kind.
+reduce confusion, tenure rungs, cost curves, span-of-control pressure, soft
+caps and a prestige reset layer. It cannot express conditional logic of any
+other kind.
 
 So before proposing a mechanic, check that a field exists for it. If one does
 not, say so plainly and propose the nearest thing the pack *can* do. Describing

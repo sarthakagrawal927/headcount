@@ -360,6 +360,14 @@ export function applyPatchToPack(
   const summary: string[] = [];
   const errors: string[] = [];
 
+  // The reset layer is an object, so it is merged rather than compared by
+  // value like the scalars below.
+  if (patch.prestige !== undefined) {
+    const before = next.prestige ? JSON.stringify(next.prestige) : 'unset';
+    next.prestige = patch.prestige as ContentPack['prestige'];
+    summary.push(`prestige: ${before} -> ${JSON.stringify(next.prestige)}`);
+  }
+
   for (const scalar of ['playerAnswerRate', 'clickRevenue', 'incidentThreshold'] as const) {
     const value = patch[scalar];
     if (value !== undefined && value !== next[scalar]) {
