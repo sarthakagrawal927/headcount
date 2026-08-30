@@ -1,4 +1,17 @@
-# Submission — copy/paste
+# Submission — SUBMITTED ✅
+
+**Both forms were submitted on 30 Aug 2026 (well before the 20:00 London
+deadline), driven end-to-end in the author's signed-in browser:**
+
+- Registration: confirmed — "Your hackathon registration has been successful!"
+- Video: uploaded unlisted, checks clean — **https://youtu.be/WqOxT_DLaZY**
+- Project submission: confirmed, with all four tracks checked (Best Use of
+  TrueForge as the primary), GitHub + deployed demo + blog links, and every
+  sponsor-feedback question answered.
+
+Everything below is the record of what was submitted.
+
+---
 
 **Fastest path — prefilled links.** These open the forms in your signed-in
 browser with every short field already filled; you review and click Submit:
@@ -58,7 +71,7 @@ Unlisted is fine. Paste-ready listing:
 | Name of person submitting | `Sarthak Agrawal` |
 | **Track** | **Best Use of TrueForge (NVIDIA DGX Spark)** |
 | GitHub link | `https://github.com/sarthakagrawal927/headcount` |
-| YouTube demo link | *(paste after upload)* |
+| YouTube demo link | `https://youtu.be/WqOxT_DLaZY` |
 | Deployed link | `https://sarthakagrawal927.github.io/headcount/` — playable in-browser build seeded with the agent-grown pack (v8), approval log replayed verbatim |
 | Blog link | `https://sarthakagrawal927.github.io/headcount/blog.html` |
 
