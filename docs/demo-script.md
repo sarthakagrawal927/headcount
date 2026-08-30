@@ -174,6 +174,12 @@ Let that sit.
 
 ## If it stalls mid-take
 
+**First check that everything is still running.** `./scripts/stack.sh` is
+idempotent — it reports what is already up and restarts only what died. A dead
+shim surfaces as `LLM stream aborted`, which points at the model and means the
+proxy, so check before diagnosing anything else.
+
+
 The free gateway allows **8,000 tokens per minute** and cannot be pinned to a
 model. Two failure shapes, both recoverable:
 
