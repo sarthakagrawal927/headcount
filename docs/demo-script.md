@@ -91,14 +91,18 @@ The panel is strict, and with a small model it blocks often. Two ways to run
 the beat, and it is worth deciding which before you record:
 
 ```bash
-npx tsx src/agent/demo.ts --approve              # panel on — shows the block
-npx tsx src/agent/demo.ts --approve --no-panel   # panel off — shows the gate and a patch landing
+npx tsx src/agent/grow.ts --rounds 3   # rounds until changes land — use for the "it works" beat
+npx tsx src/agent/demo.ts --approve    # one round with the panel — use for the block
 ```
 
-Do `--no-panel` first, so the audience sees a change actually reach the game
-and the console update. Then turn the panel on and let it stop one. The order
-matters: a viewer who has only seen refusals concludes the agent cannot do
-anything, which is the wrong lesson.
+**Use `grow.ts` for the beat where a change lands.** It runs rounds until they
+succeed and recovers between them; the last six-round run applied six of six.
+`demo.ts` is a single round, and on the free gateway's small models a single
+round is usually refused — correctly, but that is the wrong first impression.
+A viewer who has only seen refusals concludes the agent cannot do anything.
+
+So: show `grow.ts` landing a mechanic and the console updating, *then* show
+`demo.ts` being stopped. Success first, scrutiny second.
 
 ## 1:50 — The gate
 
@@ -117,6 +121,16 @@ Approve.
 > supervisor tenfold and zeroed the player's income — and mentioned neither.
 > That's the run where a human reading a well-written rationale approves it
 > anyway. The server refused it."
+
+If instead you get the fabricated-token run — the evidence field reading
+something like `simulate_patch:2025-06-25T15:07:00Z:b8c4d1e` — use it, because
+it is the better beat:
+
+> "Look at the evidence field. That token is invented. It never ran the
+> simulation; it produced something that looks like proof and attached it to a
+> paragraph of good reasoning. I approved it. The server refused it anyway,
+> because a token nobody minted has no signature. That's the difference between
+> asking an agent for evidence and requiring it to hold some."
 
 If the run applies cleanly instead, use that: switch to the console and show
 the new role appear in the hire panel mid-shift.
@@ -159,6 +173,12 @@ Let that sit.
 > something you get back only by earning it again."
 
 ## If it stalls mid-take
+
+**First check that everything is still running.** `./scripts/stack.sh` is
+idempotent — it reports what is already up and restarts only what died. A dead
+shim surfaces as `LLM stream aborted`, which points at the model and means the
+proxy, so check before diagnosing anything else.
+
 
 The free gateway allows **8,000 tokens per minute** and cannot be pinned to a
 model. Two failure shapes, both recoverable:

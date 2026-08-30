@@ -44,6 +44,8 @@ export function createMockEngine(content: ContentPack, seed = 0x5eed): EngineApi
     queue: 0,
     answered: 0,
     incidents: 0,
+    prestigePoints: 0,
+    prestigeCount: 0,
     seed,
   };
 

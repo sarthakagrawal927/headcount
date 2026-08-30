@@ -8,3 +8,6 @@ dist/
 # Runtime state — the ledger is an audit trail of a *running* system,
 # not source. A sample lives in docs/ instead.
 .headcount/
+
+# Local probe scripts, not part of the project
+.scratch/

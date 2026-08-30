@@ -84,6 +84,27 @@ export function softCapMultiplier(role: Role, state: GameState): number {
   return (full + excess * cap.throughputMultiplier) / owned;
 }
 
+/**
+ * Points a reset would bank right now.
+ *
+ * Deliberately based on lifetime rather than current earnings: a player who
+ * resets at the same point twice should get the same reward, and one who
+ * hoards should not be punished for it.
+ */
+export function prestigeGain(pack: ContentPack, state: GameState): number {
+  const p = pack.prestige;
+  if (!p || state.lifetimeCash <= 0) return 0;
+  const raw = Math.pow(state.lifetimeCash / p.scale, p.exponent);
+  return Math.max(0, Math.floor(raw) - state.prestigePoints);
+}
+
+/** The permanent multiplier earned by past resets. */
+export function prestigeMultiplier(pack: ContentPack, state: GameState): number {
+  const p = pack.prestige;
+  if (!p) return 1;
+  return 1 + state.prestigePoints * p.bonusPerPoint;
+}
+
 /** Effective confusion for a role after SOPs, tenure and coordination. */
 export function effectiveConfusion(
   role: Role,
@@ -124,6 +145,8 @@ export function createInitialState(pack: ContentPack): GameState {
     queue: 0,
     answered: 0,
     incidents: 0,
+    prestigePoints: 0,
+    prestigeCount: 0,
     seed: 1,
   };
 }
@@ -173,7 +196,12 @@ export function step(
     if (owned === 0) continue;
 
     const roleTasks =
-      owned * activeFraction * role.throughput * softCapMultiplier(role, state) * dt;
+      owned *
+      activeFraction *
+      role.throughput *
+      softCapMultiplier(role, state) *
+      prestigeMultiplier(pack, state) *
+      dt;
     const level = state.tenure[role.id] ?? 0;
     const rung = pack.tenureLadder[Math.min(level, pack.tenureLadder.length - 1)];
 
