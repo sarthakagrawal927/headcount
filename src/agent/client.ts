@@ -22,6 +22,18 @@ export function explain(err: unknown): string {
       return `TrueForge rejected the request (${err.statusCode}). Auth is enabled on ${BASE_URL}; set TRUEFORGE_TOKEN to an ID token.\n  ${body}`;
     }
     if (err.statusCode === 404) {
+      // A 404 here has two very different causes and only one of them is a
+      // configuration problem. Guessing wrong sends someone to check a URL
+      // that was right all along, so read the body before blaming the address.
+      const missingAgent = /agent not found/i.test(body);
+      if (missingAgent) {
+        const name = /Agent not found:\s*([\w.-]+)/i.exec(body)?.[1] ?? 'the agent';
+        return (
+          `The harness at ${BASE_URL} has no agent called "${name}" yet.\n` +
+          '  Create it first:\n' +
+          '    MODEL_FQN=<provider/model> npx tsx src/agent/provision.ts'
+        );
+      }
       return `TrueForge returned 404 for ${BASE_URL}. Check TRUEFORGE_BASE_URL points at the harness server, not the UI.\n  ${body}`;
     }
     return `TrueForge error ${err.statusCode ?? '(no status)'}: ${err.message}\n  ${body}`;

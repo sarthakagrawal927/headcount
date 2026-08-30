@@ -61,15 +61,25 @@ async function main(): Promise<number> {
   }
 
   /* 2. Is a model provider configured? --------------------------------- */
-  //    Not fatal: the agent can be provisioned now and given a provider later.
+  //    Fatal, and worth stopping on. The harness rejects an agent whose model
+  //    has no provider behind it, so continuing only trades a clear message
+  //    here for a raw 422 forty lines later. This is the first command anyone
+  //    running the project types; it should say what to do, not what broke.
   try {
     const models = await client.models.list();
     const names = models.data.map((m) => m.name);
     if (names.length === 0) {
-      warn(
-        'no models are configured on this harness yet. The agent will be created, but a turn will fail until a\n' +
-          '           model provider (and its API key) is added in TrueForge → Settings → Model Providers.',
+      console.error(
+        `\nNo model provider is configured on the harness at ${BASE_URL}.\n\n` +
+          '  TrueForge ships without one, and an agent cannot be created until a model exists.\n' +
+          '  It takes about a minute:\n\n' +
+          `    1. open ${BASE_URL}\n` +
+          '    2. Settings → Models → pick your provider → paste an API key → Create\n' +
+          '    3. re-run this command with the model you just added:\n\n' +
+          '         MODEL_FQN=anthropic/claude-sonnet-4-6 npx tsx src/agent/provision.ts\n\n' +
+          '  Any provider works — OpenAI, Anthropic, Gemini, or an OpenAI-compatible endpoint.\n',
       );
+      process.exit(1);
     } else if (!names.includes(DEFAULT_MODEL_FQN)) {
       warn(
         `MODEL_FQN "${DEFAULT_MODEL_FQN}" is not in this harness's model list. Available: ${names.slice(0, 12).join(', ')}` +
@@ -150,9 +160,13 @@ async function main(): Promise<number> {
       log(`agent "${AGENT_NAME}" created (id ${created.data.id}).`);
     }
   } catch (err) {
+    const detail = explain(err);
+    const isModelProblem = /model|provider/i.test(detail);
     console.error('\nCould not create or update the agent.');
-    console.error(explain(err));
-    if (/model|provider/i.test(explain(err))) {
+    // When we can say something useful, say only that: the raw error body is
+    // noise to someone who just wants to know which knob to turn.
+    if (!isModelProblem) console.error(detail);
+    if (isModelProblem) {
       console.error(
         `\n  The harness has no provider backing "${DEFAULT_MODEL_FQN}". Add one in TrueForge → Settings →\n` +
           '  Model Providers (it needs an API key), or provision against a model it already has:\n' +

@@ -237,7 +237,16 @@ npm install
 npx tsx src/mcp/server.ts        # the game, as an MCP server on :3001
 npm run dev                      # the operations console on :5173
 npx @truefoundry/trueforge@latest # the harness on :8790
+```
 
+**Then add a model provider**, once: open <http://localhost:8790> →
+Settings → Models → pick a provider → paste an API key → Create. TrueForge
+ships without one and nothing agent-side can run until it has one. Any provider
+works — OpenAI, Anthropic, Gemini, or any OpenAI-compatible endpoint. The
+console at <http://localhost:5173> is playable without this; only the agent
+needs a model.
+
+```bash
 MODEL_FQN=<provider/model> npx tsx src/agent/provision.ts   # create the agent
 npx tsx src/agent/demo.ts                                   # run the design loop
 npx tsx src/agent/demo.ts --approve                         # …and approve at the gate
