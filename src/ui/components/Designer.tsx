@@ -26,7 +26,7 @@ export function Designer() {
       <Group justify="space-between" mb={4}>
         <Text fw={600}>AI designer</Text>
         {version !== null && (
-          <Badge variant="light" color="teal" className="num">
+          <Badge variant="light" color="green" className="num">
             pack v{version}
           </Badge>
         )}
@@ -47,7 +47,7 @@ export function Designer() {
           reverseActive
           bulletSize={26}
           lineWidth={2}
-          color="teal"
+          color="green"
           className="scrollpane"
           style={{ maxHeight: 380, overflowY: 'auto' }}
         >

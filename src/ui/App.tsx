@@ -8,7 +8,7 @@ import { Questions } from './components/Questions';
 import { fmtCash, fmtClock, fmtInt, fmtRate } from './format';
 
 const STATUS: Record<Pressure, { text: string; color: string }> = {
-  nominal: { text: 'Running smoothly', color: 'teal' },
+  nominal: { text: 'Running smoothly', color: 'green' },
   strained: { text: 'Barely keeping up', color: 'yellow' },
   saturated: { text: 'You are the bottleneck', color: 'orange' },
   critical: { text: 'Floor blocked on you', color: 'red' },
@@ -62,9 +62,9 @@ export function App() {
             </Badge>
           </Group>
           <Group gap="xl">
-            <Stat label="Cash" value={fmtCash(game.state.cash)} color="yellow.4" />
+            <Stat label="Cash" value={fmtCash(game.state.cash)} />
             <Stat label="Team" value={fmtInt(game.telemetry.headcountTotal)} />
-            <Stat label="Output" value={`${fmtRate(game.telemetry.throughput)}/s`} color="teal.4" />
+            <Stat label="Output" value={`${fmtRate(game.telemetry.throughput)}/s`} color="green.4" />
             <Button size="xs" variant="default" onClick={actions.toggleRunning}>
               {game.running ? 'Hold' : 'Resume'}
             </Button>

@@ -97,13 +97,13 @@ export function Grow({
           <Tabs.Tab value="hire">Hire</Tabs.Tab>
           <Tabs.Tab
             value="sops"
-            rightSection={pendingSops > 0 ? <Badge size="xs" circle>{pendingSops}</Badge> : null}
+            rightSection={pendingSops > 0 ? <Badge size="xs" circle variant="default">{pendingSops}</Badge> : null}
           >
             SOPs
           </Tabs.Tab>
           <Tabs.Tab
             value="promote"
-            rightSection={promotable > 0 ? <Badge size="xs" circle>{promotable}</Badge> : null}
+            rightSection={promotable > 0 ? <Badge size="xs" circle variant="default">{promotable}</Badge> : null}
           >
             Promote
           </Tabs.Tab>
@@ -136,12 +136,12 @@ export function Grow({
                     ? [
                         {
                           text: `earns ${fmtCash(role.revenuePerTask * role.throughput)}/s`,
-                          color: 'teal.4',
+                          color: 'green.4',
                         },
                         { text: `asks on ${fmtPct(role.confusion)} of tasks`, color: 'yellow.4' },
                       ]
                     : [
-                        { text: `answers ${fmtRate(role.answerRate)} q/s for you`, color: 'teal.4' },
+                        { text: `answers ${fmtRate(role.answerRate)} q/s for you`, color: 'green.4' },
                         { text: `passes ${fmtPct(role.escalateFraction)} up`, color: 'yellow.4' },
                       ];
                 return (
@@ -178,7 +178,7 @@ export function Grow({
                       <Text size="sm" fw={600}>
                         {sop.name}
                       </Text>
-                      <Badge variant="light" color="teal" size="sm">
+                      <Badge variant="light" color="green" size="sm">
                         published
                       </Badge>
                     </Group>
@@ -194,7 +194,7 @@ export function Grow({
                   facts={[
                     {
                       text: `${fmtPct(1 - sop.confusionMultiplier)} fewer questions`,
-                      color: 'teal.4',
+                      color: 'green.4',
                     },
                   ]}
                   cost={sop.cost}
@@ -258,7 +258,7 @@ export function Grow({
                   facts={[
                     {
                       text: `asks ${fmtPct(1 - next.escalationMultiplier)} less`,
-                      color: 'teal.4',
+                      color: 'green.4',
                     },
                     { text: `${fmtPct(next.errorRate, 1)} silent defects`, color: 'red.4' },
                   ]}
@@ -287,7 +287,7 @@ export function Grow({
             </div>
             <Button
               size="xs"
-              color="grape"
+              color="violet"
               variant={prestigeReady > 0 ? 'filled' : 'default'}
               disabled={prestigeReady <= 0}
               onClick={() => actions.prestige()}

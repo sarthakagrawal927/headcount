@@ -125,7 +125,7 @@ export function Hero({
                 value={fmtRate(answerRate)}
                 unit="per second"
                 sub="fixed. forever."
-                color="teal.4"
+                color="green.4"
               />
             </Group>
 
@@ -133,7 +133,7 @@ export function Hero({
               size={110}
               thickness={10}
               roundCaps
-              sections={[{ value: working * 100, color: pressure === 'critical' ? 'red.6' : 'teal.6' }]}
+              sections={[{ value: working * 100, color: pressure === 'critical' ? 'red.6' : 'green.5' }]}
               label={
                 <div style={{ textAlign: 'center' }}>
                   <Text size="lg" fw={600} ff="monospace" className="num" lh={1}>
@@ -158,7 +158,7 @@ export function Hero({
             data={data}
             dataKey="t"
             series={[
-              { name: 'tasks', label: 'Tasks/s', color: 'teal.6' },
+              { name: 'tasks', label: 'Tasks/s', color: 'green.5' },
               { name: 'questions', label: 'Questions/s', color: 'yellow.6' },
             ]}
             curveType="monotone"
