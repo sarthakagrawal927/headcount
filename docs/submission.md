@@ -87,6 +87,12 @@ Not as a wrapper — as the substrate. Every required capability is load-bearing
 - **Subagents** — three critics on distinct lenses must try to *refute* a
   proposal before a human sees it; read-only by construction, verified against
   their stored manifests before the panel convenes.
+- **A second live agent as the help system** — the console's field guide has a
+  question box answered by `headcount-foreman`, a harness agent that is
+  read-only *by construction* (its manifest enables only the observation
+  tools). It reads live telemetry over MCP before answering "what should I do
+  next" — the same server and annotations as the designer, at the opposite end
+  of the trust spectrum.
 - **Session persistence** — sessions bound by name, so the manifest re-resolves
   every turn. This is the signature mechanic: a supervisor process watches the
   floor and rewrites `requireApprovalForTools` at runtime, so the agent **earns**

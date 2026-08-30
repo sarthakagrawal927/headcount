@@ -617,6 +617,31 @@ app.post('/game/action', async (req, res) => {
 });
 
 /**
+ * The console's question box, answered by an agent on the harness.
+ *
+ * `headcount-foreman` is provisioned lazily on first use (see
+ * src/agent/foreman.ts). It is read-only by construction — its manifest
+ * enables only the observation tools — so this endpoint can never mutate the
+ * game, whatever the question says. Imported dynamically so the game server
+ * runs fine when the harness is down; the console shows the reason instead.
+ */
+app.post('/guide/ask', async (req, res) => {
+  const question = String(req.body?.question ?? '').trim().slice(0, 300);
+  if (!question) {
+    res.status(400).json({ ok: false, reason: 'question required' });
+    return;
+  }
+  try {
+    const { askForeman, FOREMAN } = await import('../agent/foreman.js');
+    const { answer, sessionId } = await askForeman(question);
+    res.json({ ok: true, answer, agent: FOREMAN, sessionId });
+  } catch (err) {
+    const { explain } = await import('../agent/client.js');
+    res.status(503).json({ ok: false, reason: explain(err) });
+  }
+});
+
+/**
  * What a given evidence token actually applies.
  *
  * Read-only, and it exists so a reviewer — human or agent — can compare what a

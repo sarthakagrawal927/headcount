@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Badge, Button, Container, Grid, Group, Stack, Text } from '@mantine/core';
 import { useGame, type Pressure } from './useGame';
 import { Designer } from './components/Designer';
+import { Guide } from './components/Guide';
 import { Grow } from './components/Grow';
 import { Hero } from './components/Hero';
 import { Questions } from './components/Questions';
@@ -31,6 +32,7 @@ export function App() {
   const game = useGame();
   const { actions } = game;
   const status = STATUS[game.pressure];
+  const [guideOpen, setGuideOpen] = useState(false);
 
   // Two shortcuts: A answers the oldest question, Space works the line.
   useEffect(() => {
@@ -51,6 +53,7 @@ export function App() {
 
   return (
     <Container size={1240} py="md">
+      <Guide opened={guideOpen} onClose={() => setGuideOpen(false)} />
       <Stack gap="md">
         <Group justify="space-between">
           <Group gap="md">
@@ -65,6 +68,9 @@ export function App() {
             <Stat label="Cash" value={fmtCash(game.state.cash)} />
             <Stat label="Team" value={fmtInt(game.telemetry.headcountTotal)} />
             <Stat label="Output" value={`${fmtRate(game.telemetry.throughput)}/s`} color="green.4" />
+            <Button size="xs" variant="default" onClick={() => setGuideOpen(true)}>
+              How it works
+            </Button>
             <Button size="xs" variant="default" onClick={actions.toggleRunning}>
               {game.running ? 'Hold' : 'Resume'}
             </Button>

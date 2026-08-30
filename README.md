@@ -60,6 +60,7 @@ is load-bearing rather than demonstrated once and abandoned:
 | **Human approval checkpoints** | `requireApprovalForTools` on all three mutating tools, set via API because it has no UI | the gate fires on camera; three separate refusals are shown verbatim |
 | **Subagent delegation** | `src/agent/critic.ts` — three critics on distinct lenses, read-only by construction | a live panel blocked a proposal 3-of-3, each naming a different real defect |
 | **Session persistence** | sessions bound by name, so the manifest re-resolves every turn | autonomy is granted and revoked *mid-session* by rewriting that manifest |
+| **An agent as the help system** | `src/agent/foreman.ts` — the console's field guide asks `headcount-foreman`, read-only by construction (only observation tools enabled) | it reads live telemetry over MCP before answering "what should I do next" — click **How it works** |
 
 Also used, because they earned their place rather than to fill a checklist:
 
