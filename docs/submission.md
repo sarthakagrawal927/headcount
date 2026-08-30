@@ -74,7 +74,10 @@ happens and being willing to revoke.
 
 Starting from one producing role and one supervisor, it grew a third management
 tier (`production_manager`), a second supervisor type, an additional producer,
-and a soft cap — a named entry in the novelty taxonomy. When span of control
+a real queue-based soft cap, and — once the pack could express one — a prestige
+reset layer, choosing the exponent the design skill calls the highest-leverage
+number in the genre. A regenerated six-round run applied six of six mechanics,
+each naming the kind of structural novelty it attempted. When span of control
 made a flat org unworkable, its answer was a manager-of-managers, which is the
 structurally correct response rather than a larger number.
 

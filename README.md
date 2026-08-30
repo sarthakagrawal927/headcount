@@ -235,7 +235,7 @@ npx tsx src/agent/demo.ts --approve                         # …and approve at 
 npx tsx src/agent/clearance-demo.ts                         # gated → cleared → gated
 npx tsx src/agent/autonomy.ts                               # the supervisor: earn and lose clearance
 npx tsx src/agent/autonomy.ts --once                        # current standing and gate
-npm test                                                    # 36 tests (on the test branches until merged)
+npm test                                                    # 61 tests
 ```
 
 Play it at `http://localhost:5173`. Hire past your span of control and watch
