@@ -120,3 +120,17 @@ on — reference-bound sessions, and explicit tool annotations.
   the same thing.
 - **Daytona.** Standalone mode has an undocumented local sandbox, so the
   dependency was avoidable.
+
+## Evidence files are regenerated last
+
+Found during the final claims audit. This project generates its own proof —
+`docs/grown-tree.md` and `docs/ledger-sample.jsonl` are written by the runs
+they document — and every re-run overwrites them. Twice a README figure
+described an earlier run whose artifact a later test run had silently
+replaced: the claim outlived its proof.
+
+The rule now: any artifact a document cites is regenerated *after* the last
+code change, and the document is edited to match what that run actually
+produced — not the other way around. The current numbers (a 3.33 → 1.11
+confusion drop; five of six mechanics landing over six rounds) are exactly
+what the committed files show.

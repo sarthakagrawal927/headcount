@@ -96,7 +96,8 @@ npx tsx src/agent/demo.ts --approve    # one round with the panel — use for th
 ```
 
 **Use `grow.ts` for the beat where a change lands.** It runs rounds until they
-succeed and recovers between them; the last six-round run applied six of six.
+succeed and recovers between them; the last six-round run landed five of six
+(round one produced an unreadable simulation and no proposal — kept in the log).
 `demo.ts` is a single round, and on the free gateway's small models a single
 round is usually refused — correctly, but that is the wrong first impression.
 A viewer who has only seen refusals concludes the agent cannot do anything.
