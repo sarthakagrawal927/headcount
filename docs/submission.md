@@ -39,6 +39,7 @@ Unlisted is fine. Paste-ready listing:
 > designed live by an agent on TrueForge — simulated, evidence-bound, and
 > human-approved before they land. Both live scenes are real, unedited runs.
 > Built for the Agent Harness Hackathon.
+> Play it: https://sarthakagrawal927.github.io/headcount/
 > Repo: https://github.com/sarthakagrawal927/headcount
 
 | Field | Answer |
