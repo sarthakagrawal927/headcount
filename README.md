@@ -220,7 +220,7 @@ silently does nothing.
 
 ## The demo
 
-[**docs/demo.mp4**](docs/demo.mp4) — captioned, no narration. Every terminal
+[**docs/demo.mp4**](docs/demo.mp4) — 1:55, captioned, no narration. Every terminal
 frame in it is verbatim output from a real run, and both live scenes are the
 actual system recorded while it moved: the wall forming as a player hires into
 it, and the agent landing two designed mechanics in the console mid-shift.
