@@ -99,10 +99,11 @@ silently renders placeholders forever.
 Qodo reviewed every pull request; nothing substantive reached `main` unreviewed.
 
 On [PR #2](https://github.com/sarthakagrawal927/headcount/pull/2) it raised six
-findings, **four marked High — and every one landed in `src/agent/autonomy.ts`**,
+findings, **every one marked High — and every one in `src/agent/autonomy.ts`**,
 the file that decides whether an agent may act unsupervised, and therefore the
-one place where failing permissively is the outcome that must not happen. All
-four were real:
+one place where failing permissively is the outcome that must not happen. Four
+were unfixed and are addressed below; the other two we had already fixed on
+`main`, which we said in the thread rather than claiming credit for:
 
 - **Versions are not identities.** Pack versions restart at 1 with the game
   process, so a fresh run's first changes were skipped as already-seen —

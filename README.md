@@ -339,10 +339,12 @@ through a branch and a PR; nothing meaningful lands on `main` unreviewed.
 [#4](https://github.com/sarthakagrawal927/headcount/pull/4) after #2 was
 auto-closed when the branch it was stacked on was deleted on merge)
 
-Qodo raised **six findings, four marked High**, and every one landed in
+Qodo raised **six findings, every one marked High**, and every one landed in
 `src/agent/autonomy.ts` — the file whose entire job is deciding whether an
 agent may act unsupervised, and therefore the one place where failing
-permissively is the outcome that must not happen. All four were real:
+permissively is the outcome that must not happen. Four were unfixed — those are
+below; the other two we had already fixed on `main`, which we said in the
+thread rather than claiming credit for:
 
 | Finding | Why it mattered |
 | --- | --- |
