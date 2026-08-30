@@ -61,6 +61,15 @@ is load-bearing rather than demonstrated once and abandoned:
 | **Subagent delegation** | `src/agent/critic.ts` — three critics on distinct lenses, read-only by construction | a live panel blocked a proposal 3-of-3, each naming a different real defect |
 | **Session persistence** | sessions bound by name, so the manifest re-resolves every turn | autonomy is granted and revoked *mid-session* by rewriting that manifest |
 
+Also used, because they earned their place rather than to fill a checklist:
+
+| | |
+| --- | --- |
+| Skills | `idle-game-design` — the genre's real maths and a taxonomy of structural novelty, sparse-cloned from this repo and read from the sandbox on demand |
+| Deferred tool loading | schemas fetched when needed; preloading all seven breached the gateway's token ceiling and stopped the agent working entirely |
+| Generative UI | telemetry and simulation comparisons rendered as charts in chat, using a grammar read out of the shipped component registry |
+| Context management | compaction and large-tool-response offloading |
+
 The last row is the one worth pausing on: because TrueForge re-reads an agent's
 spec on every turn, **clearance is a runtime property**. A supervisor process
 watches the floor and rewrites the gate — the agent earns the right to act
@@ -222,19 +231,6 @@ what actually happens and being willing to take autonomy back.
 The footgun this depends on: the session must be bound to the agent **by name**.
 An inline spec freezes the manifest for the session's life and the rewrite
 silently does nothing.
-
-## Harness surface used
-
-| Capability | How |
-| --- | --- |
-| MCP tools | The game is a remote MCP server; 7 tools, annotated so the harness can gate them |
-| Deferred tool loading | Schemas fetched on demand rather than preloaded — the two needed first are named explicitly. Preloading all seven cost enough prompt to breach the gateway's token ceiling |
-| Sandbox | Local provider (no Daytona key). Skills and the code-mode MCP client mount there; the agent runs shell and Python in it — `exec` proven end to end, with the skill read off sandbox disk |
-| Skills | `idle-game-design` sparse-cloned from this repo, loaded on demand |
-| Approval gates | `requireApprovalForTools` on all three mutating tools |
-| Subagents | Three critic agents, each on a distinct lens, must try to refute a proposal before a human sees it — read-only by construction, verified against the stored manifests before the panel will convene |
-| Session persistence | Sessions bound by name, so manifest changes take effect on the next turn |
-| Context management | Compaction and large-tool-response offloading on |
 
 ## The demo
 
