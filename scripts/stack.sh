@@ -59,6 +59,16 @@ else
 fi
 start console 5173 "" npx vite --port 5173 --strictPort
 
+# The shim is a single point of failure for every agent turn: if it exits, the
+# harness reports an aborted LLM stream and the run dies pointing at the wrong
+# layer. Check it explicitly rather than assuming a process started an hour ago
+# is still there.
+if [[ -n "${GATEWAY_KEY:-}" ]] && ! up 3002/v1/models; then
+  echo "  shim died — restarting it"
+  nohup npx tsx src/gateway/proxy.ts > "$LOG_DIR/shim.log" 2>&1 &
+  sleep 3
+fi
+
 echo
 echo "  console   http://localhost:5173"
 echo "  harness   http://localhost:8790"

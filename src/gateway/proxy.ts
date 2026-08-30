@@ -354,6 +354,24 @@ app.all('/v1/*path', async (req, res) => {
   }
 });
 
+/**
+ * Stay up.
+ *
+ * This shim is a single point of failure for every agent turn: when it exits,
+ * the harness sees its LLM stream abort and the run dies with a message that
+ * says nothing about the real cause. It died once mid-session and cost a
+ * confusing half hour of diagnosis pointed at the wrong layer.
+ *
+ * A proxy has no state worth protecting, so there is nothing an exception can
+ * corrupt by being survived. Log it loudly and keep serving.
+ */
+process.on('uncaughtException', (err) => {
+  console.error('uncaught exception (staying up):', err);
+});
+process.on('unhandledRejection', (err) => {
+  console.error('unhandled rejection (staying up):', err);
+});
+
 app.listen(PORT, () => {
   console.log(`OpenAI-compatible shim on http://localhost:${PORT}/v1 -> ${UPSTREAM}`);
   console.log(`injecting project_id=${PROJECT_ID}`);
