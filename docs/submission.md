@@ -29,7 +29,17 @@ There is a page 2 the form did not reveal; it is short.
 
 **Before you open it: upload the video to YouTube.** The form requires a
 YouTube *link* — a file will not do. `docs/demo.mp4` (1:55) is the file.
-Unlisted is fine.
+Unlisted is fine. Paste-ready listing:
+
+> **Title:** HEADCOUNT — an idle game an AI agent designs while you approve its changes
+>
+> **Description:** An idle game where your attention is the resource that runs
+> out. Workers produce tasks but ask questions; you answer at a fixed rate, so
+> hiring past your span of control lowers throughput. The game's mechanics are
+> designed live by an agent on TrueForge — simulated, evidence-bound, and
+> human-approved before they land. Both live scenes are real, unedited runs.
+> Built for the Agent Harness Hackathon.
+> Repo: https://github.com/sarthakagrawal927/headcount
 
 | Field | Answer |
 | --- | --- |
