@@ -48,6 +48,24 @@ a supervisor tier, or grant autonomy.
 
 Nobody authored those numbers. They fall out of the model.
 
+## The Double-O checklist, and where each piece is
+
+The track asks for an agent that maximises harness capabilities. Each one here
+is load-bearing rather than demonstrated once and abandoned:
+
+| Required | Where it lives | Evidence |
+| --- | --- | --- |
+| **Real tool connections via MCP** | `src/mcp/server.ts` — the live game is a remote MCP server, 7 tools, annotated so the harness can gate them | the agent reads and mutates the running game through it in the demo |
+| **Sandboxed code execution** | local sandbox provider; skills and the code-mode client mount there | `exec` runs shell + Python, reading the skill off sandbox disk — in the video |
+| **Human approval checkpoints** | `requireApprovalForTools` on all three mutating tools, set via API because it has no UI | the gate fires on camera; three separate refusals are shown verbatim |
+| **Subagent delegation** | `src/agent/critic.ts` — three critics on distinct lenses, read-only by construction | a live panel blocked a proposal 3-of-3, each naming a different real defect |
+| **Session persistence** | sessions bound by name, so the manifest re-resolves every turn | autonomy is granted and revoked *mid-session* by rewriting that manifest |
+
+The last row is the one worth pausing on: because TrueForge re-reads an agent's
+spec on every turn, **clearance is a runtime property**. A supervisor process
+watches the floor and rewrites the gate — the agent earns the right to act
+alone, and loses it, without anyone touching a config file.
+
 ## What the agent does
 
 The agent is a **game designer**, not a player — optimal play of an idle economy
@@ -211,10 +229,10 @@ silently does nothing.
 | --- | --- |
 | MCP tools | The game is a remote MCP server; 7 tools, annotated so the harness can gate them |
 | Deferred tool loading | Schemas fetched on demand rather than preloaded — the two needed first are named explicitly. Preloading all seven cost enough prompt to breach the gateway's token ceiling |
-| Sandbox | Local provider — skills and the MCP client script mount there, no Daytona key required |
+| Sandbox | Local provider (no Daytona key). Skills and the code-mode MCP client mount there; the agent runs shell and Python in it — `exec` proven end to end, with the skill read off sandbox disk |
 | Skills | `idle-game-design` sparse-cloned from this repo, loaded on demand |
 | Approval gates | `requireApprovalForTools` on all three mutating tools |
-| Subagents | Enabled for fanning playtests across competing play archetypes |
+| Subagents | Three critic agents, each on a distinct lens, must try to refute a proposal before a human sees it — read-only by construction, verified against the stored manifests before the panel will convene |
 | Session persistence | Sessions bound by name, so manifest changes take effect on the next turn |
 | Context management | Compaction and large-tool-response offloading on |
 
