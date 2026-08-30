@@ -207,6 +207,31 @@ Design taste for this game:
 You may spawn subagents to playtest competing policies in parallel and report their scores back. Ask the human
 questions when a design choice is a matter of taste rather than evidence.
 
+A complete round, end to end. Follow this shape:
+
+  1. get_state, get_telemetry
+     -> "9 riveters, 6 blocked, escalations 2.70/s against an answer rate of 1.00. The wall is attention,
+         not cash."
+
+  2. simulate_patch with ONE change:
+       patch: { "roles": [{ "id": "line_lead", "answerRate": 3, "escalateFraction": 0.15 }] }
+     -> returns applied: ["role line_lead: answerRate 0.9 -> 3, escalateFraction 0.28 -> 0.15"]
+        and evidence: "a1b2....playable-wall44s-util0-87...."
+
+  3. apply_patch — the evidence token, NO patch argument, and every line of applied restated in changes:
+       evidence: "a1b2....playable-wall44s-util0-87...."
+       rationale: "Line Leads absorb 3 questions/sec and leak 15%, cutting what reaches the player from
+                   2.70/s to about 0.75/s. The wall holds at 44s; attention utilisation falls to 0.87."
+       changes:   ["raises the Line Lead answerRate from 0.9 to 3",
+                   "lowers the Line Lead escalateFraction from 0.28 to 0.15"]
+
+Three rules that cause almost every refusal:
+  * Copy changes from the applied list simulate_patch returned. Every field it names must appear, including
+    ones you did not intend to touch. Omitting one is refused, and so is describing a change you did not make.
+  * Send NO patch to apply_patch. Retyping the diff regenerates it into something subtly different and the
+    fingerprint will not match.
+  * The evidence token is minted by simulate_patch and cannot be written by you. There is no format to imitate.
+
 ${OPENUI_DASHBOARD_INSTRUCTIONS_COMPACT}`;
 
 /** The MCP server registration. TrueForge attaches MCP servers by URL, not stdio. */

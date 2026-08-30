@@ -274,13 +274,19 @@ needs a model.
 
 ```bash
 MODEL_FQN=<provider/model> npx tsx src/agent/provision.ts   # create the agent
-npx tsx src/agent/demo.ts                                   # run the design loop
-npx tsx src/agent/demo.ts --approve                         # …and approve at the gate
-npx tsx src/agent/clearance-demo.ts                         # gated → cleared → gated
-npx tsx src/agent/autonomy.ts                               # the supervisor: earn and lose clearance
-npx tsx src/agent/autonomy.ts --once                        # current standing and gate
-npm test                                                    # 61 tests
+
+npx tsx src/agent/grow.ts --rounds 3   # ← start here: rounds until mechanics land
+npx tsx src/agent/demo.ts --approve    # one round, with the panel and the gate
+npx tsx src/agent/clearance-demo.ts    # gated → cleared → gated, same agent
+npx tsx src/agent/autonomy.ts          # the supervisor: earn and lose clearance
+npx tsx src/agent/narrator.ts --print  # the video's captions, written on the harness
+npm test                               # 61 tests
 ```
+
+**Start with `grow.ts`.** It runs rounds until changes land and recovers between
+them — the last six-round run applied six of six. `demo.ts` is a single round,
+and on a small model a single round is often refused; that refusal is a real
+result and an unfair first impression, in that order.
 
 Play it at `http://localhost:5173`. Hire past your span of control and watch
 throughput fall. `?cash=400&hire=14` jumps straight to the wall.
