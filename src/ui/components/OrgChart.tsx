@@ -3,6 +3,47 @@ import { TENURE_NAMES } from '../content';
 import { fmtInt, fmtPct, fmtRate } from '../format';
 import { IconOrg } from '../icons';
 
+/**
+ * Questions per second raised by the floor, after written procedures.
+ *
+ * Display arithmetic only — the engine owns the truth, and this deliberately
+ * ignores tenure and coordination so the number reads as "what the floor asks",
+ * not "what reaches you". The gap between this figure and the one at the top
+ * of the chart is the org doing its job, which is the entire point of the
+ * diagram.
+ */
+function raisedPerSecond(content: ContentPack, state: GameState): number {
+  return content.roles
+    .filter((r) => r.tier === 1)
+    .reduce((sum, role) => {
+      const owned = state.headcount[role.id] ?? 0;
+      if (!owned) return sum;
+      const sopMult = content.sops
+        .filter((s) => s.roleId === role.id && state.sops.includes(s.id))
+        .reduce((acc, s) => acc * s.confusionMultiplier, 1);
+      return sum + owned * role.throughput * role.confusion * sopMult;
+    }, 0);
+}
+
+/** Questions per second the tiers above the floor can absorb. */
+function absorbedPerSecond(content: ContentPack, state: GameState): number {
+  return content.roles
+    .filter((r) => r.tier >= 2)
+    .reduce((sum, r) => sum + (state.headcount[r.id] ?? 0) * r.answerRate, 0);
+}
+
+/** The connector between tiers: where questions go, and how many. */
+function Flow({ label, rate, alarm }: { label: string; rate: number; alarm?: boolean }) {
+  return (
+    <div className={`orgflow${alarm ? ' orgflow--alarm' : ''}`} aria-hidden="true">
+      <span className="orgflow__arrow" />
+      <span className="orgflow__text">
+        {label} <b>{fmtRate(rate)} q/s</b>
+      </span>
+    </div>
+  );
+}
+
 const MAX_GLYPHS = 44;
 
 function Units({ n, blocked, tier }: { n: number; blocked: number; tier: number }) {
@@ -90,6 +131,9 @@ export function OrgChart({
   const sopsFor = (roleId: string) =>
     state.sops.filter((id) => content.sops.find((s) => s.id === id)?.roleId === roleId).length;
 
+  const raised = raisedPerSecond(content, state);
+  const reaching = Math.max(0, raised - Math.min(absorbedPerSecond(content, state), raised));
+
   return (
     <div className="panel">
       <div className="panel__head">
@@ -123,11 +167,21 @@ export function OrgChart({
           </div>
         </div>
 
-        {tiers.map((tier) => {
+        <Flow
+          label="reaching you ·"
+          rate={reaching}
+          alarm={reaching > content.playerAnswerRate}
+        />
+
+        {tiers.map((tier, idx) => {
           const roles = content.roles.filter((r) => r.tier === tier);
           const hired = roles.filter((r) => (state.headcount[r.id] ?? 0) > 0);
           return (
-            <div className="orgtier" key={tier}>
+            <div className="orgtier-block" key={tier}>
+            {tier === 1 && idx > 0 && (
+              <Flow label="raised by the floor ·" rate={raised} />
+            )}
+            <div className="orgtier">
               <span className="orgtier__spine" />
               <span className="orgtier__label">
                 {tier > 1 ? `TIER ${tier}` : 'FLOOR'}
@@ -159,6 +213,7 @@ export function OrgChart({
                   ))
                 )}
               </div>
+            </div>
             </div>
           );
         })}

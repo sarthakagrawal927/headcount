@@ -1391,3 +1391,39 @@ svg {
     opacity: 1;
   }
 }
+
+/* ------------------------------------------------------------- org flow -- */
+/* The connectors between tiers. Questions flow upward; the gap between the
+   floor's number and the one under YOU is the org absorbing — the entire
+   argument of the diagram, stated in q/s. */
+.orgtier-block { display: contents; }
+.orgflow {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding-left: 84px; /* aligns with the tier spine */
+}
+.orgflow__arrow {
+  width: 1px;
+  height: 18px;
+  background: var(--rule);
+  position: relative;
+}
+.orgflow__arrow::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -3px;
+  border: 3.5px solid transparent;
+  border-bottom-color: var(--rule);
+}
+.orgflow__text {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.06em;
+  color: var(--ink-mute);
+}
+.orgflow__text b { color: var(--ink-dim); font-weight: 500; }
+.orgflow--alarm .orgflow__text b { color: var(--alarm-hot); }
+.orgflow--alarm .orgflow__arrow,
+.orgflow--alarm .orgflow__arrow::before { background: var(--alarm); border-bottom-color: var(--alarm); }
