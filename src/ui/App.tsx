@@ -1,96 +1,117 @@
 import { useEffect } from 'react';
-import { useGame } from './useGame';
-import { AgentFeed } from './components/AgentFeed';
-import { AttentionMeter } from './components/AttentionMeter';
-import { Footer } from './components/Footer';
-import { OrgChart } from './components/OrgChart';
-import { PrestigePanel } from './components/PrestigePanel';
-import { QueuePanel } from './components/QueuePanel';
-import { StorePanel } from './components/StorePanel';
-import { ThroughputChart } from './components/ThroughputChart';
-import { TopBar } from './components/TopBar';
-import { WorkButton } from './components/WorkButton';
+import { Badge, Button, Container, Grid, Group, Stack, Text } from '@mantine/core';
+import { useGame, type Pressure } from './useGame';
+import { Designer } from './components/Designer';
+import { Grow } from './components/Grow';
+import { Hero } from './components/Hero';
+import { Questions } from './components/Questions';
+import { fmtCash, fmtClock, fmtInt, fmtRate } from './format';
+
+const STATUS: Record<Pressure, { text: string; color: string }> = {
+  nominal: { text: 'Running smoothly', color: 'teal' },
+  strained: { text: 'Barely keeping up', color: 'yellow' },
+  saturated: { text: 'You are the bottleneck', color: 'orange' },
+  critical: { text: 'Floor blocked on you', color: 'red' },
+};
+
+function Stat({ label, value, color }: { label: string; value: string; color?: string }) {
+  return (
+    <div>
+      <Text size="xs" c="dimmed" tt="uppercase" lts="0.06em">
+        {label}
+      </Text>
+      <Text fw={600} ff="monospace" c={color} className="num">
+        {value}
+      </Text>
+    </div>
+  );
+}
 
 export function App() {
   const game = useGame();
   const { actions } = game;
+  const status = STATUS[game.pressure];
 
-  // A — answer the oldest question. The one shortcut worth having.
+  // Two shortcuts: A answers the oldest question, Space works the line.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'a' && e.key !== 'A') return;
       const target = e.target as HTMLElement | null;
       if (target && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
-      actions.answer();
+      if (e.key === 'a' || e.key === 'A') actions.answer();
+      if (e.code === 'Space' && !e.repeat && target?.tagName !== 'BUTTON') {
+        e.preventDefault();
+        actions.work();
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [actions]);
 
+  const lastLog = game.log.length ? game.log[game.log.length - 1] : null;
+
   return (
-    <div className="app" data-pressure={game.pressure}>
-      <TopBar
-        state={game.state}
-        telemetry={game.telemetry}
-        pressure={game.pressure}
-        running={game.running}
-        onToggleRunning={actions.toggleRunning}
-      />
+    <Container size={1240} py="md">
+      <Stack gap="md">
+        <Group justify="space-between">
+          <Group gap="md">
+            <Text fw={700} lts="0.1em" size="lg">
+              HEADCOUNT
+            </Text>
+            <Badge color={status.color} variant="light" size="lg" radius="sm">
+              {status.text}
+            </Badge>
+          </Group>
+          <Group gap="xl">
+            <Stat label="Cash" value={fmtCash(game.state.cash)} color="yellow.4" />
+            <Stat label="Team" value={fmtInt(game.telemetry.headcountTotal)} />
+            <Stat label="Output" value={`${fmtRate(game.telemetry.throughput)}/s`} color="teal.4" />
+            <Button size="xs" variant="default" onClick={actions.toggleRunning}>
+              {game.running ? 'Hold' : 'Resume'}
+            </Button>
+          </Group>
+        </Group>
 
-      <div className="deck">
-        <div className="col col--left">
-          <StorePanel content={game.content} state={game.state} actions={actions} />
-          <PrestigePanel
-            content={game.content}
-            state={game.state}
-            ready={game.prestigeReady}
-            actions={actions}
-          />
-          <WorkButton
-            clickRevenue={game.content.clickRevenue}
-            showHint={game.telemetry.headcountTotal === 0}
-            onWork={actions.work}
-          />
-        </div>
+        <Grid gap="md">
+          <Grid.Col span={{ base: 12, lg: 8 }}>
+            <Stack gap="md">
+              <Hero
+                telemetry={game.telemetry}
+                history={game.history}
+                content={game.content}
+                pressure={game.pressure}
+                onWork={actions.work}
+              />
+              <Questions
+                questions={game.questions}
+                hiddenQueue={game.hiddenQueue}
+                now={game.state.t}
+                onAnswer={actions.answer}
+              />
+            </Stack>
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, lg: 4 }}>
+            <Stack gap="md">
+              <Grow
+                content={game.content}
+                state={game.state}
+                prestigeReady={game.prestigeReady}
+                actions={actions}
+              />
+              <Designer />
+            </Stack>
+          </Grid.Col>
+        </Grid>
 
-        <div className="col col--main">
-          <AttentionMeter
-            telemetry={game.telemetry}
-            playerAnswerRate={game.content.playerAnswerRate}
-            orgCapacity={game.orgCapacity}
-            pressure={game.pressure}
-          />
-          <OrgChart
-            content={game.content}
-            state={game.state}
-            blockedFraction={game.telemetry.blockedFraction}
-            answered={game.state.answered}
-          />
-          <ThroughputChart history={game.history} answerRate={game.content.playerAnswerRate} />
-        </div>
-
-        {/* Two things want the player's attention, and they are not the same
-            kind of thing: the queue is work only a human can do, the feed is
-            work an agent already did and a human already approved. Stacking
-            them in one column makes the trade visible — the game is changing
-            underneath you while you answer. */}
-        <div className="col col--right">
-          <QueuePanel
-            questions={game.questions}
-            hiddenQueue={game.hiddenQueue}
-            now={game.state.t}
-            onAnswer={actions.answer}
-          />
-          <AgentFeed />
-        </div>
-      </div>
-
-      <Footer
-        log={game.log}
-        t={game.state.t}
-        lifetimeCash={game.state.lifetimeCash}
-        answered={game.state.answered}
-      />
-    </div>
+        <Group justify="space-between">
+          <Text size="xs" c="dimmed" className="num" lineClamp={1}>
+            {lastLog ? `${fmtClock(lastLog.t)} — ${lastLog.text}` : ' '}
+          </Text>
+          <Text size="xs" c="dimmed" className="num" style={{ whiteSpace: 'nowrap' }}>
+            shift {fmtClock(game.state.t)} · answered {fmtInt(game.state.answered)} · lifetime{' '}
+            {fmtCash(game.state.lifetimeCash)}
+          </Text>
+        </Group>
+      </Stack>
+    </Container>
   );
 }

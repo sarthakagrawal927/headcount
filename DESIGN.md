@@ -1,18 +1,22 @@
 # Design system — as built
 
-- **Theme**: single dark theme, OKLCH tokens in `src/ui/styles.css`.
-- **Type**: IBM Plex Sans (UI) + IBM Plex Mono (data, labels); tabular-nums
-  everywhere numbers move. Fixed rem scale, tight steps.
-- **Color strategy**: restrained. Teal `--accent` = production/health;
-  amber = questions/money; red = saturation/defect/blocked. Semantic only —
-  never decorative. Page re-tints via `data-pressure` as the queue saturates.
-- **Layout**: 3-column grid (roles/store · floor · escalations/agent feed),
-  1px rules on `--rule-soft`, panels on `--bg-panel`.
-- **Components**: panel + `panel__head` header pattern; chip stats; inline SVG
-  icons only (no emoji). Buttons: uppercase mono labels, 1px border.
-- **Motion**: state-conveying only, 150–250ms ease-out; `prefers-reduced-motion`
-  honored. Status lamp blinks under pressure; new agent-feed entries highlight.
-- **Contrast**: every ink token used for text meets WCAG AA at the size it is
-  used. `scripts/contrast.py` converts the OKLCH tokens to sRGB and prints the
-  ratios; run it after touching the palette. `--ink-faint` sits at L 0.60
-  specifically because 0.49 measured 3.01:1 behind 11px labels.
+- **Stack**: [Mantine](https://mantine.dev) v9 (`@mantine/core`, `@mantine/charts`
+  on recharts). Theme object in `src/ui/theme.ts`; the few things it cannot
+  express live in `src/ui/global.css`.
+- **Theme**: forced dark. Custom `dark` ramp keeps the old console's cool cast
+  (hue ~225) — body `dark.7`, cards `dark.6`.
+- **Type**: IBM Plex Sans (UI) + IBM Plex Mono (numbers, via `ff="monospace"`
+  and the `.num` tabular-nums class). Fixed rem scale, Mantine defaults.
+- **Color strategy**: restrained, semantic only. Teal = production/health,
+  yellow = questions/money, red = saturation/blocked, grape = prestige reset.
+  Accents on state and primary actions, never decoration.
+- **Layout**: Container 1240 → 8/4 Grid (understand + act · grow + agent),
+  stacking at `lg`. Four cards total: Hero, Questions, Grow, AI designer.
+- **Components**: Mantine vocabulary throughout — Card, Paper rows, Badge,
+  Tabs, Timeline (agent feed), RingProgress (share of team working),
+  AreaChart sparkline with a red reference line at the player's answer rate.
+  Buy buttons carry the price as their label (idle-game convention).
+- **Motion**: Mantine defaults only; `respectReducedMotion: true` in the theme.
+- **Contrast**: no text below Mantine `dimmed` on cards; the old system's
+  lesson (faint 10–11px labels failing AA) carries over — smallest text uses
+  `c="dimmed"`, never `dark.3`.

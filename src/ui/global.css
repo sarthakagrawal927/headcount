@@ -1,0 +1,17 @@
+/* The few things Mantine's theme object cannot express. */
+
+html {
+  color-scheme: dark;
+}
+
+/* Numbers that move must not jitter. */
+.num,
+[data-num] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Thin, quiet scrollbars inside panels. */
+.scrollpane {
+  scrollbar-width: thin;
+  scrollbar-color: var(--mantine-color-dark-4) transparent;
+}
