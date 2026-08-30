@@ -94,7 +94,7 @@ model the design quality rises; the controls are what make it safe either way.
 
 ## Links
 
-- Demo video: _(to add)_
+- Demo video: [docs/demo.mp4](docs/demo.mp4) in the repo (2:39, captioned; upload to YouTube/Drive for the form if a link is required)
 - Write-up: [docs/blog.md](docs/blog.md)
 - Architecture: [docs/architecture.md](docs/architecture.md)
 - What we learned about the harness: [docs/harness-findings.md](docs/harness-findings.md)

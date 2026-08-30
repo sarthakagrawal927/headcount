@@ -218,6 +218,15 @@ silently does nothing.
 | Session persistence | Sessions bound by name, so manifest changes take effect on the next turn |
 | Context management | Compaction and large-tool-response offloading on |
 
+## The demo
+
+[**docs/demo.mp4**](docs/demo.mp4) — 2:39, captioned. Every terminal frame in
+it is verbatim output from a real run, and both live scenes are the actual
+system recorded while it moved: the wall forming as a player hires into it, and
+the agent landing two designed mechanics in the console mid-shift. The
+recording pipeline is `scripts/video/` — CDP frame capture plus ffmpeg, no
+dependencies.
+
 ## Running it
 
 ```bash
