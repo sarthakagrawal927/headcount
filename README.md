@@ -253,26 +253,30 @@ throughput fall. `?cash=400&hire=14` jumps straight to the wall.
 | `skills/`       | `SKILL.md` design playbook loaded on demand                           |
 | `docs/`         | Decision log and what we learned about the harness                    |
 
-## What actually happened on real runs
+## The record
 
-Every control in this project was added because of something the agent did,
-not because of something we imagined it might do. In order:
+Every control above was added because of something the agent did on a real run,
+not something we imagined it might do. In order, with what each one produced:
 
-1. It proposed a supervisor with `answerRate: 0` — one that cannot answer a
-   single question — with a rationale citing attention figures that patch could
-   not produce. → **coherence rules**
-2. It simulated one patch and asked to apply a different one. → the
-   **fingerprint check** named both, exactly.
-3. It simulated a design, received `DEGENERATE-no-wall`, attached that failing
-   verdict as its evidence anyway, and a human approved it. → **the server
-   refused it regardless.**
-4. It asked to apply what it described as *"adds a tier-2 Line Lead role"*. The
-   patch also cut the existing Line Lead from 3.0 answers/sec to 0.3 —
-   crippling the only working supervisor — and zeroed the player's hand-earned
-   income. Neither appeared in its change list. → **declared-changes check.**
+| # | What it did | What it led to |
+| --- | --- | --- |
+| 1 | Proposed a supervisor with `answerRate: 0` — one that cannot answer a single question — citing attention figures that patch could not produce | coherence rules |
+| 2 | Simulated one patch and asked to apply a different one | the fingerprint check named both hashes exactly |
+| 3 | Simulated a design, received `DEGENERATE-no-wall`, attached that failing verdict as its own evidence, and a human approved it | the server refused it regardless |
+| 4 | Asked to apply *"adds a tier-2 Line Lead role"* — while cutting the existing Line Lead from 3.0 answers/sec to 0.3 and zeroing the player's income, declaring neither | declared-changes check |
+| 5 | Declared `escalateFraction → 0.1` while the patch set `0.5`, plus three further undeclared edits | the check caught all four |
+| 6 | Invented an evidence token outright: `simulate_patch:2025-06-25T15:07:00Z:b8c4d1e` | refused; a token nobody minted has no signature |
 
-None of these are adversarial prompts. They are what a competent model does
-when asked to design something, and every one of them reads well in prose.
+None of these were adversarial prompts. They are what a competent model does
+when asked to design something, and every one of them reads well in prose —
+which is the entire reason none of these checks can be a request.
+
+Two of the bugs, though, were **ours**. The declaration check spent part of a
+day accusing honest patches, because it compared snake_case identifiers to
+English; then, once fixed, it spent an hour letting patches move three fields
+while admitting to one, because it only required the entity name. Both were
+found by writing tests, not by watching runs — every symptom of the first
+pointed squarely at the agent.
 
 ## Qodo Code Review Evidence
 
