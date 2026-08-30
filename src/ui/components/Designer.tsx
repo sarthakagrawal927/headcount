@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Badge, Card, Group, Text, Timeline } from '@mantine/core';
 import type { PatchLogEntry } from '../../engine/createEngine';
 import { getPatchLog, subscribeToPatchLog } from '../remoteEngine';
+import { GROWN_AT, GROWN_LOG } from '../grown';
+import { isHostedDemo } from '../hosted';
 import { fmtClock } from '../format';
 
 /** The live approval log, straight off the poll that already runs. */
@@ -17,7 +19,11 @@ function usePatchLog(): PatchLogEntry[] {
  * by a human before it landed — the timeline is that record, live.
  */
 export function Designer() {
-  const log = usePatchLog();
+  const live = usePatchLog();
+  // The hosted demo has no harness to poll, so it replays the approval log
+  // captured with the pack it is running — labeled as the recording it is.
+  const hosted = isHostedDemo();
+  const log = hosted && live.length === 0 ? GROWN_LOG : live;
   const entries = [...log].reverse(); // newest first
   const version = log.length ? log[log.length - 1].version : null;
 
@@ -25,15 +31,23 @@ export function Designer() {
     <Card withBorder padding="lg">
       <Group justify="space-between" mb={4}>
         <Text fw={600}>AI designer</Text>
-        {version !== null && (
-          <Badge variant="light" color="green" className="num">
-            pack v{version}
-          </Badge>
-        )}
+        <Group gap={6}>
+          {hosted && (
+            <Badge variant="default" size="sm">
+              recorded run
+            </Badge>
+          )}
+          {version !== null && (
+            <Badge variant="light" color="green" className="num">
+              pack v{version}
+            </Badge>
+          )}
+        </Group>
       </Group>
       <Text size="xs" c="dimmed" mb="md">
-        An agent designs this game's mechanics while you play — every change is proved in
-        simulation and approved by a human before it lands here.
+        {hosted
+          ? `Every mechanic in this demo beyond the seed was designed by an agent on the TrueForge harness — proved in simulation, human-approved, and captured verbatim on ${GROWN_AT.slice(0, 10)}. This is that session's approval log.`
+          : "An agent designs this game's mechanics while you play — every change is proved in simulation and approved by a human before it lands here."}
       </Text>
 
       {entries.length === 0 ? (
@@ -60,7 +74,7 @@ export function Designer() {
                 </Text>
               }
               title={
-                <Text size="sm" fw={500} lh={1.3}>
+                <Text size="sm" fw={500} lh={1.3} lineClamp={2} style={{ overflowWrap: 'anywhere' }}>
                   {entry.summary[0] ?? 'no structural change'}
                 </Text>
               }

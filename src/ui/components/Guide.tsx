@@ -14,6 +14,8 @@ import {
   TextInput,
 } from '@mantine/core';
 
+import { isHostedDemo } from '../hosted';
+
 const BASE = import.meta.env.VITE_GAME_URL ?? 'http://localhost:3001';
 
 /** UI element → harness feature, the mapping judges ask about. */
@@ -27,6 +29,19 @@ const WIRING: [string, string][] = [
 ];
 
 function Foreman() {
+  if (isHostedDemo()) {
+    return (
+      <Text size="sm" c="dimmed">
+        On the live stack this box is answered by <b>headcount-foreman</b>, a read-only agent on
+        the TrueForge harness that checks the floor over MCP before it answers. This hosted demo
+        runs entirely in your browser, so the foreman is off shift — clone the repo to meet it.
+      </Text>
+    );
+  }
+  return <ForemanLive />;
+}
+
+function ForemanLive() {
   const [question, setQuestion] = useState('');
   const [state, setState] = useState<
     { kind: 'idle' } | { kind: 'busy' } | { kind: 'answer'; text: string; session: string } | { kind: 'error'; text: string }

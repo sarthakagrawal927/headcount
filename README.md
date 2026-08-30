@@ -286,9 +286,9 @@ npm test                               # 61 tests
 ```
 
 **Start with `grow.ts`.** It runs rounds until changes land and recovers between
-them — in the last six-round run, five of six landed; in round one the
-simulation came back unreadable and the agent proposed nothing, which the run
-records as-is. `demo.ts` is a single round,
+them — in the last eight-round run (`freeai/gh-gpt-5`), six of eight landed,
+including a quality-control subgame and a new "Focus" resource; in two rounds
+the agent never reached a proposal, which the run records as-is. `demo.ts` is a single round,
 and on a small model a single round is often refused; that refusal is a real
 result and an unfair first impression, in that order.
 

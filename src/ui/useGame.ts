@@ -23,14 +23,19 @@ import { DEFAULT_PACK, QUESTION_BANK } from './content';
 // ---------------------------------------------------------------- SEAM (1/1)
 import { createEngine as createLocalEngine } from '../engine/createEngine';
 import { createRemoteEngine } from './remoteEngine';
+import { GROWN_PACK } from './grown';
+import { isHostedDemo } from './hosted';
 
 /**
  * By default the console attaches to the shared company running in the MCP
  * server, so the player and the agent act on the same game. `?local=1` runs a
  * private in-browser company instead, which is useful when the server is not
- * running and for testing the engine in isolation.
+ * running and for testing the engine in isolation. On any non-localhost host
+ * (the GitHub Pages demo) there is no server at all, so the game runs in the
+ * browser seeded with the agent-grown pack — see src/ui/hosted.ts.
  */
 function createEngine(pack: ContentPack) {
+  if (isHostedDemo()) return createLocalEngine(GROWN_PACK ?? pack);
   const local =
     typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('local') === '1';
