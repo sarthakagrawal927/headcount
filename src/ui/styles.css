@@ -23,7 +23,10 @@
   --ink: oklch(0.955 0.006 210);
   --ink-dim: oklch(0.795 0.010 212);
   --ink-mute: oklch(0.645 0.013 215);
-  --ink-faint: oklch(0.492 0.013 218);
+  /* 0.60, not 0.49. This token labels 11px panel meta and axis text, and at
+     0.49 it measured 3.01:1 against the panel — fine for large text, a WCAG
+     failure for the size it is actually used at. 0.60 measures 4.73:1. */
+  --ink-faint: oklch(0.600 0.013 218);
 
   /* --- signal -------------------------------------------------------- */
   --ok: oklch(0.775 0.108 188);

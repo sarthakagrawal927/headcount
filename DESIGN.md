@@ -12,3 +12,7 @@
   icons only (no emoji). Buttons: uppercase mono labels, 1px border.
 - **Motion**: state-conveying only, 150–250ms ease-out; `prefers-reduced-motion`
   honored. Status lamp blinks under pressure; new agent-feed entries highlight.
+- **Contrast**: every ink token used for text meets WCAG AA at the size it is
+  used. `scripts/contrast.py` converts the OKLCH tokens to sRGB and prints the
+  ratios; run it after touching the palette. `--ink-faint` sits at L 0.60
+  specifically because 0.49 measured 3.01:1 behind 11px labels.
