@@ -60,7 +60,7 @@ Unlisted is fine. Paste-ready listing:
 | GitHub link | `https://github.com/sarthakagrawal927/headcount` |
 | YouTube demo link | *(paste after upload)* |
 | Deployed link | `https://sarthakagrawal927.github.io/headcount/` — playable in-browser build seeded with the agent-grown pack (v8), approval log replayed verbatim |
-| Blog link | *(optional — `docs/blog.md` if you post it)* |
+| Blog link | `https://sarthakagrawal927.github.io/headcount/blog.html` |
 
 ### What does your project do?
 
