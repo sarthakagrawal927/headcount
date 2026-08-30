@@ -220,12 +220,24 @@ silently does nothing.
 
 ## The demo
 
-[**docs/demo.mp4**](docs/demo.mp4) — 2:39, captioned. Every terminal frame in
-it is verbatim output from a real run, and both live scenes are the actual
-system recorded while it moved: the wall forming as a player hires into it, and
-the agent landing two designed mechanics in the console mid-shift. The
-recording pipeline is `scripts/video/` — CDP frame capture plus ffmpeg, no
-dependencies.
+[**docs/demo.mp4**](docs/demo.mp4) — captioned, no narration. Every terminal
+frame in it is verbatim output from a real run, and both live scenes are the
+actual system recorded while it moved: the wall forming as a player hires into
+it, and the agent landing two designed mechanics in the console mid-shift.
+
+**The caption copy was written by an agent running on this harness.**
+`headcount-narrator` sits on the same TrueForge instance as the designer,
+receives a fixed brief of measured results and verbatim refusals, and returns
+the cards. Every figure it writes is checked against that brief before the copy
+can be used — a caption citing a number that appears nowhere in the evidence is
+rejected. Two takes were generated and a human picked one; the other asserted
+that hiring "raises floor, lowers ceiling", which is wrong and reads perfectly
+well. Both are described in [docs/narration.json](docs/narration.json), because
+a project arguing that agent output needs reading should say when its own did.
+
+Reproduce it: `npx tsx src/agent/narrator.ts --print`, then
+`bash scripts/video/build.sh`. The recording pipeline is `scripts/video/` — CDP
+frame capture over Node's built-in WebSocket plus ffmpeg, no dependencies.
 
 ## Running it
 
