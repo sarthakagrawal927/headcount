@@ -132,3 +132,24 @@ turn brought it to about 5,700, keeping the common path free of an extra round
 trip. Worth measuring before assuming a small model is the problem: our own
 prompt fragment was 40% of the system prompt, and the harness contributes
 roughly 8k characters before you write anything.
+
+## A vanished temp directory takes the harness down with a 500
+
+After several hours of running, every turn began failing with a bare
+`500 Internal server error`. The harness log carried the real cause:
+
+```
+Unhandled error {"error":"codeModeSocketParentPath must be an existing directory"}
+```
+
+Code mode holds a socket in a temp directory, and if that directory is removed
+while the server is running — by a cleanup script, by the OS reaping `/tmp`, or
+by someone tidying — the harness does not recreate it and does not degrade. It
+returns 500 for every turn, including turns that never touch code mode, and the
+error surfaced to the SDK says nothing about directories.
+
+Restarting the server fixes it and loses nothing: agents, connectors, skills
+and settings all live in SQLite and came back intact.
+
+Worth knowing because the symptom points nowhere near the cause. We spent the
+first minutes of it suspecting the model gateway, which was fine.
