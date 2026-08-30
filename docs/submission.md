@@ -1,100 +1,138 @@
-# Submission
+# Submission — copy/paste
 
-Copy-paste for `forms.gle/PxGLsWW1HPyroQ5u9`. Deadline 30 Aug 2026, 20:00 London.
+Two forms. **Registration first** (`forms.gle/dNHFh7wH8uJj4bZH8`) — every
+participant must register individually, and submitting without it may not count.
 
-**Project:** HEADCOUNT
-**Repo:** https://github.com/sarthakagrawal927/headcount
-**Track:** Double-O (Best Use of TrueForge)
+Deadline: **30 Aug 2026, 20:00 London**.
 
 ---
 
-## One line
+## 1. Registration form (~60 seconds)
 
-An idle game where the workers are AI agents — and an AI agent designs the game
-while you approve its changes.
+| Field | Answer |
+| --- | --- |
+| Email | `sarthak@vaultwealth.com` |
+| First name | `Sarthak` |
+| Last name | `Agrawal` |
+| Team or individual | **Individual** |
+| Team name | `Solo` |
+| Country | `India` |
+| Company / School | `Vault Wealth` |
+| Social media URL | *(optional — LinkedIn/X)* |
+| Is this your first hackathon? | *(your call)* |
 
-## What it does
+There is a page 2 the form did not reveal; it is short.
+
+---
+
+## 2. Project submission form
+
+**Before you open it: upload the video to YouTube.** The form requires a
+YouTube *link* — a file will not do. `docs/demo.mp4` (1:55) is the file.
+Unlisted is fine.
+
+| Field | Answer |
+| --- | --- |
+| Email | `sarthak@vaultwealth.com` |
+| Team name | `SOLO` |
+| Name of person submitting | `Sarthak Agrawal` |
+| **Track** | **Best Use of TrueForge (NVIDIA DGX Spark)** |
+| GitHub link | `https://github.com/sarthakagrawal927/headcount` |
+| YouTube demo link | *(paste after upload)* |
+| Deployed link | *(leave blank — it runs locally)* |
+| Blog link | *(optional — `docs/blog.md` if you post it)* |
+
+### What does your project do?
+
+HEADCOUNT is an idle game whose economy is human attention — and an AI agent
+designs the game while you approve its changes.
 
 Idle games model a company where labour is perfect: a machine makes 3.2 units a
-second forever, unsupervised. Real labour isn't like that, and neither is an AI
-agent — both are fast, tireless and **uncertain**, and uncertainty escalates to
-a human.
+second forever, unsupervised. Real labour is not like that, and neither is an AI
+agent — both are fast, tireless and **uncertain**, and uncertainty escalates to a
+human. So in HEADCOUNT workers raise questions and you answer them at a fixed
+rate. Throughput settles at `answerRate / confusion`, an equation headcount does
+not appear in, so hiring cannot raise the ceiling and past your span of control
+it lowers it: a hire-only strategy peaks at 4.56 tasks/sec and declines to 1.67,
+with 21 of 23 staff standing idle.
 
-HEADCOUNT makes that the economy. Workers raise questions; you answer them at a
-fixed rate. Throughput settles at `playerAnswerRate / effectiveConfusion` — an
-equation headcount does not appear in — so hiring cannot raise the ceiling, and
-past your span of control it actively lowers it. A hire-only strategy peaks at
-4.56 tasks/s and **declines to 1.67** with 21 of 23 staff standing idle. The
-only escapes are org design: write the procedure down, add a supervisor tier,
-or grant autonomy.
+The problem it is really about is the one every team adopting agents is walking
+into: each agent you add costs a human more attention, and nobody has a good
+interface for that. The tech tree here is an org chart — write the procedure
+down, add a supervisor tier, grant autonomy — because those are the only three
+ways to scale a factory, a startup, or a fleet of agents.
 
-Then the game's content is designed by an agent running on TrueForge. It reads
-the live game over MCP, diagnoses the wall, designs a mechanic, proves it in a
-deterministic headless simulator, and must have a human approve before anything
-reaches the running economy.
+### How did you use TrueForge in your project?
 
-## How TrueForge is used
+Not as a wrapper — as the substrate. Every required capability is load-bearing:
 
-Not as a wrapper — as the substrate.
+- **MCP** — the live game is a remote MCP server (7 tools), annotated so the
+  harness gates the mutating ones.
+- **Sandbox** — the local provider (undocumented; no Daytona key needed) hosts
+  the skill and code-mode client; the agent runs shell and Python in it.
+- **Skills** — a git-backed `SKILL.md` carrying the genre's real maths, sparse-
+  cloned from the repo and read on demand.
+- **Approval gates** — `requireApprovalForTools` on all three mutating tools,
+  set via API because it has no UI.
+- **Subagents** — three critics on distinct lenses must try to *refute* a
+  proposal before a human sees it; read-only by construction, verified against
+  their stored manifests before the panel convenes.
+- **Session persistence** — sessions bound by name, so the manifest re-resolves
+  every turn. This is the signature mechanic: a supervisor process watches the
+  floor and rewrites `requireApprovalForTools` at runtime, so the agent **earns**
+  the right to act alone and loses it, mid-session, with no config change.
 
-- **MCP** — the live game is a remote MCP server; seven tools, annotated so the harness can gate them
-- **Sandbox** — the local provider (undocumented; no Daytona key needed) hosts the skill and the code-mode MCP client
-- **Skills** — a git-backed `SKILL.md` sparse-cloned from this repo, carrying the genre's real math and a taxonomy of structural novelty; only its name sits in context until the agent needs the body
-- **Approval gates** — `requireApprovalForTools` on all three mutating tools
-- **Subagents** — three adversarial critics, each on a distinct lens, must try to refute a proposal before a human sees it
-- **Generative UI** — the agent renders telemetry and simulation comparisons as OpenUI charts rather than prose
-- **Runtime manifests** — TrueForge re-resolves an agent's spec every turn, which is what makes autonomy revocable mid-session
+Three safety layers sit behind the gate, each added because of something the
+agent actually did. The sharpest: it once **fabricated an evidence token**,
+attached it to a well-argued rationale, a human approved it — and the server
+refused it anyway, because a token nobody minted has no signature. Separately, a
+change passed simulation, passed evidence binding, and applied with no human
+involved because clearance had been earned; throughput fell from 4.59 to 1.56
+tasks/sec and clearance was revoked automatically. Simulation was not sufficient.
 
-## Control and safety
+`docs/harness-findings.md` documents five places TrueForge's docs and shipped
+code disagree, including a `Query()` grammar that parses, starts a timer, and
+silently renders placeholders forever.
 
-Three layers, each added because of something the agent actually did:
+### How did you use Qodo in your project?
 
-1. **Coherence rules.** It designed a supervisor with `answerRate: 0` — one that cannot answer a single question — with a rationale citing figures that patch could not produce.
-2. **Evidence binding.** `simulate_patch` mints an HMAC token bound to the exact diff; `apply_patch` refuses anything unsimulated, tampered, expired, or whose own verdict failed. It once attached a `DEGENERATE` verdict as its own evidence, a human approved it, and the server refused it anyway.
-3. **Declared changes.** It asked to apply "adds a tier-2 Line Lead role" — while the patch also cut the existing supervisor from 3.0 answers/sec to 0.3 and zeroed the player's income, declaring neither.
+Qodo reviewed every pull request; nothing substantive reached `main` unreviewed.
 
-## Earned autonomy — the part we'd point a judge at
+On [PR #2](https://github.com/sarthakagrawal927/headcount/pull/2) it raised six
+findings, **four marked High — and every one landed in `src/agent/autonomy.ts`**,
+the file that decides whether an agent may act unsupervised, and therefore the
+one place where failing permissively is the outcome that must not happen. All
+four were real:
 
-Nobody grants clearance by hand. A supervisor process watches the floor before
-and after every change the agent lands, records outcomes to an auditable
-ledger, and rewrites the agent's manifest: a run of clean changes earns
-unattended `apply_patch`, one regression takes it back.
+- **Versions are not identities.** Pack versions restart at 1 with the game
+  process, so a fresh run's first changes were skipped as already-seen —
+  supervision silently suspended exactly when nobody was watching.
+- **Unobserved was treated as neutral.** A change whose observation window was
+  open when the supervisor died counted neither for nor against clearance, so a
+  regression could vanish by being badly timed.
+- **Stale clearance outlived its evidence** (Qodo flagged this security):
+  `reconcile` ran only after a settle, so a regression recorded before a restart
+  left earned autonomy live until the next change happened to land.
+- **The critic panel protected nothing** — implemented, tested, and called from
+  no path anyone actually runs.
 
-Then this happened. The agent proposed raising worker confusion 0.3 → 0.9,
-framed as tightening tolerances. **The simulator passed it. Evidence binding
-passed it. It had earned clearance, so no human saw it at all.** Throughput on
-the real floor fell from 4.59 to 1.56 tasks/s, and clearance was revoked
-automatically.
+All four are fixed on `main`, each answered in-thread, and two further findings
+were already fixed there — which we said in the thread rather than claiming
+credit. Qodo returned [PR #1](https://github.com/sarthakagrawal927/headcount/pull/1)
+clean: 0 bugs, 0 rule violations, 0 requirement gaps.
 
-Simulation was not sufficient. A design can clear every pre-flight check and
-still be wrong, and the only thing that catches that is watching what actually
-happens and being willing to revoke.
+It also caught a bug that no amount of running the system would have surfaced:
+the declaration check compared snake_case identifiers against English prose, so
+`line_lead` declared as "the Line Lead" read as *undeclared* and honest patches
+were refused. A false accusation from a check whose entire job is catching
+dishonesty.
 
-## What the agent designed
-
-Starting from one producing role and one supervisor, it grew a third management
-tier (`production_manager`), a second supervisor type, an additional producer,
-a real queue-based soft cap, and — once the pack could express one — a prestige
-reset layer, choosing the exponent the design skill calls the highest-leverage
-number in the genre. A regenerated six-round run applied six of six mechanics,
-each naming the kind of structural novelty it attempted. When span of control
-made a flat org unworkable, its answer was a manager-of-managers, which is the
-structurally correct response rather than a larger number.
-
-It also repaired damage: after the sabotage patch above crippled the floor, a
-later round diagnosed it and brought confusion back down, unprompted.
-
-## Notes
-
-Model access ran through a free multi-provider gateway that cannot be pinned
-and routes to 20–30B models, requiring a shim (`src/gateway/proxy.ts`) because
-the gateway and its providers disagree irreconcilably about tool-message
-format. Everything above was produced at that quality level. With a stronger
-model the design quality rises; the controls are what make it safe either way.
+---
 
 ## Links
 
-- Demo video: [docs/demo.mp4](docs/demo.mp4) in the repo (2:39, captioned; upload to YouTube/Drive for the form if a link is required)
-- Write-up: [docs/blog.md](docs/blog.md)
-- Architecture: [docs/architecture.md](docs/architecture.md)
-- What we learned about the harness: [docs/harness-findings.md](docs/harness-findings.md)
+- Repo: <https://github.com/sarthakagrawal927/headcount>
+- Video file to upload: `docs/demo.mp4` (1:55)
+- Write-up: [docs/blog.md](blog.md)
+- Architecture: [docs/architecture.md](architecture.md)
+- Harness findings: [docs/harness-findings.md](harness-findings.md)
