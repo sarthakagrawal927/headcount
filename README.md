@@ -75,8 +75,23 @@ is missing, forged, expired, minted for a *different* diff, or whose verdict was
 `degenerate`/`stalled`. The token travels in the tool arguments, so the human
 reads the simulation's verdict rather than the agent's account of it.
 
-This was built because of something that happened on the first real run: the
-agent proposed a supervisor with `answerRate: 0` — one that cannot answer a
+It has caught outright fabrication. On a live run the agent attached this:
+
+```
+"evidence": "simulate_patch:2025-06-25T15:07:00Z:b8c4d1e"
+```
+
+It never called `simulate_patch`. It invented a plausible-looking proof object
+and attached it to a well-argued rationale — and a human skimming that request
+would see an evidence field, populated, next to a paragraph of reasoning. The
+server refused it, because a token nobody minted cannot carry a signature.
+
+That is the whole argument for binding evidence rather than requesting it. An
+agent asked to cite its evidence can cite something that does not exist; an
+agent required to *hold* it cannot.
+
+The layer was built because of something earlier and milder: the agent proposed
+a supervisor with `answerRate: 0` — one that cannot answer a
 single question — and attached a confident rationale citing attention figures
 that patch could not possibly produce. Later, with binding in place, it
 simulated a design, got `DEGENERATE-no-wall`, attached that failing verdict as

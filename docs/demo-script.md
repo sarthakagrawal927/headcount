@@ -118,6 +118,16 @@ Approve.
 > That's the run where a human reading a well-written rationale approves it
 > anyway. The server refused it."
 
+If instead you get the fabricated-token run — the evidence field reading
+something like `simulate_patch:2025-06-25T15:07:00Z:b8c4d1e` — use it, because
+it is the better beat:
+
+> "Look at the evidence field. That token is invented. It never ran the
+> simulation; it produced something that looks like proof and attached it to a
+> paragraph of good reasoning. I approved it. The server refused it anyway,
+> because a token nobody minted has no signature. That's the difference between
+> asking an agent for evidence and requiring it to hold some."
+
 If the run applies cleanly instead, use that: switch to the console and show
 the new role appear in the hire panel mid-shift.
 
