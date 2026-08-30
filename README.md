@@ -16,7 +16,7 @@ never scales: a human's attention. HEADCOUNT makes that the economy. Then it
 hands the design of the game to an agent, which must prove every change in
 simulation and ask a human before it can touch anything.
 
-![The HEADCOUNT operations console: escalations arriving at 1.02 questions per second against a fixed ceiling of 1.00, 65% of the workforce blocked, five questions queued, and an agent activity panel showing two approved design changes](docs/images/console-at-the-wall.png)
+![The HEADCOUNT console: the team makes 3.33 tasks/s and asks 1.00 question/s against a fixed answer rate of 1.00, 44% of the team stuck waiting, two questions queued, and the AI designer timeline showing pack v6](docs/images/console-at-the-wall.png)
 
 *Nine people on the floor and six of them standing still, waiting for you to
 answer a question. On the right, two changes an agent designed: a soft cap it
