@@ -17,7 +17,7 @@ const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, 
 
 const css = `
   * { margin: 0; box-sizing: border-box; }
-  html, body { width: 1920px; height: 1080px; background: #0b0f12; color: #d7e0e4;
+  html, body { width: 1920px; height: 1080px; background: #09090b; color: #d7e0e4;
     font-family: "IBM Plex Sans", -apple-system, sans-serif; }
   .wrap { height: 100%; display: grid; place-items: center; padding: 120px; }
   .inner { max-width: 1400px; width: 100%; }
@@ -25,7 +25,7 @@ const css = `
   .brand b { font-size: 28px; letter-spacing: 0.14em; }
   .brand span { font-size: 16px; color: #5d6d75; letter-spacing: 0.1em; }
   h1 { font-size: 64px; line-height: 1.15; font-weight: 650; letter-spacing: -0.01em; }
-  h1 em { color: #35c2b4; font-style: normal; }
+  h1 em { color: #4ade80; font-style: normal; }
   p.sub { margin-top: 28px; font-size: 30px; line-height: 1.45; color: #93a3ab; }
   .cap { font-size: 54px; line-height: 1.3; font-weight: 650; letter-spacing: -0.015em;
     text-wrap: balance; }
@@ -33,18 +33,18 @@ const css = `
   .cap .l + .l { margin-top: 10px; }
   .byline { margin-top: 46px; font-family: "IBM Plex Mono", monospace; font-size: 17px;
     letter-spacing: 0.1em; color: #43525a; text-transform: uppercase; }
-  .accentbar { width: 76px; height: 3px; background: #35c2b4; margin-bottom: 40px; }
-  .cap em { color: #35c2b4; font-style: normal; }
+  .accentbar { width: 76px; height: 3px; background: #4ade80; margin-bottom: 40px; }
+  .cap em { color: #4ade80; font-style: normal; }
   .cap strong { color: #e5534b; font-weight: 600; }
   .term { background: #07090b; border: 1px solid #1d262b; border-radius: 6px; padding: 36px 42px;
     font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 23px; line-height: 1.62;
     white-space: pre-wrap; color: #c7d2d8; }
-  .term .g { color: #35c2b4; } .term .r { color: #e5534b; } .term .d { color: #5d6d75; }
+  .term .g { color: #4ade80; } .term .r { color: #e5534b; } .term .d { color: #5d6d75; }
   .term .y { color: #d9a13c; } .term b { color: #fff; font-weight: 600; }
   .label { font-size: 17px; letter-spacing: 0.16em; color: #5d6d75; text-transform: uppercase;
     margin-bottom: 18px; }
   .rule { height: 1px; background: #1d262b; margin: 40px 0; }
-  .close-url { margin-top: 44px; font-family: "IBM Plex Mono", monospace; font-size: 30px; color: #35c2b4; }
+  .close-url { margin-top: 44px; font-family: "IBM Plex Mono", monospace; font-size: 30px; color: #4ade80; }
   .footer-chip { position: absolute; bottom: 54px; left: 120px; font-size: 15px;
     letter-spacing: 0.14em; color: #43525a; text-transform: uppercase; }
 `;

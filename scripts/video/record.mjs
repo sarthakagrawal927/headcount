@@ -66,8 +66,9 @@ ws.onmessage = (msg) => {
   }
 };
 
+// 1280 logical @1.5x = 1920x1080 physical, so the 1240px layout fills the frame.
 await send('Emulation.setDeviceMetricsOverride', {
-  width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false,
+  width: 1280, height: 720, deviceScaleFactor: 1.5, mobile: false,
 });
 await send('Page.enable');
 await send('Page.navigate', { url });
