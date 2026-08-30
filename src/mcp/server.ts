@@ -576,6 +576,18 @@ app.post('/game/action', async (req, res) => {
         };
         break;
       }
+      case 'prestige': {
+        // The player choosing to start over. Available only when the active
+        // pack has a reset layer — which, in this game, means only when an
+        // agent designed one and a human approved it.
+        const result = game.engine.prestige?.(game.state, game.pack);
+        if (!result || !result.ok) {
+          res.status(409).json({ ok: false, reason: result?.reason ?? 'no reset layer in this pack' });
+          return;
+        }
+        game.state = result.state;
+        break;
+      }
       case 'hire':
       case 'sop':
       case 'tenure': {

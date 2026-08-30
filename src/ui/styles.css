@@ -263,7 +263,10 @@ svg {
   background: var(--rule-soft);
 }
 .col--left {
-  grid-template-rows: minmax(0, 1fr) auto;
+  /* The middle row is the reset layer, which is absent until an agent designs
+     one — `auto` collapses to nothing when the panel renders null, so the
+     column looks identical until the moment it appears. */
+  grid-template-rows: minmax(0, 1fr) auto auto;
 }
 .col--main {
   grid-template-rows: auto minmax(0, 1fr) auto;
