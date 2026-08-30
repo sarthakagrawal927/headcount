@@ -59,6 +59,8 @@ export interface Engine {
   hire(state: GameState, pack: ContentPack, roleId: string): ActionResult;
   buySop(state: GameState, pack: ContentPack, sopId: string): ActionResult;
   grantTenure(state: GameState, pack: ContentPack, roleId: string): ActionResult;
+  /** Optional: present only if the engine build supports a reset layer. */
+  prestige?(state: GameState, pack: ContentPack): ActionResult;
   simulate(
     pack: ContentPack,
     policy: PlayPolicy,
@@ -183,6 +185,9 @@ export async function loadEngine(): Promise<Engine> {
   const hire = pick('hire', actions?.hire, fallbackHire);
   const buySop = pick('buySop', actions?.buySop, fallbackBuySop);
   const grantTenure = pick('grantTenure', actions?.grantTenure, fallbackGrantTenure);
+  // No fallback: a reset layer without the real implementation would silently
+  // do the wrong thing, and doing nothing is the safer absence.
+  const prestige = (actions as { prestige?: Engine['prestige'] } | undefined)?.prestige;
   const scoreRun = pick('scoreRun', sim?.scoreRun, fallbackScoreRun);
 
   /** Last-resort simulator: step the engine and buy greedily when we can. */
@@ -215,6 +220,7 @@ export async function loadEngine(): Promise<Engine> {
     hire,
     buySop,
     grantTenure,
+    prestige,
     simulate,
     scoreRun,
     provenance,

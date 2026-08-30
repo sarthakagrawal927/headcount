@@ -36,7 +36,7 @@ structurally incapable of it. Here is a real 900-second run of the engine:
 | strategy                          | peak → final | hired | idle |
 | --------------------------------- | ------------ | ----- | ---- |
 | hire-only                         | 4.56 → 1.67  | 23    | 21   |
-| SOP only                          | 4.67 → 3.16  | 25    | 22   |
+| SOP only                          | 4.67 → 4.25  | 25    | 21   |
 | builds management structure       | 29.0 → 29.0  | 32    | 0    |
 
 You hired 23 people and 21 of them are standing around waiting for you to

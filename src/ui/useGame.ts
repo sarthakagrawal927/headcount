@@ -60,6 +60,10 @@ export interface EngineApi {
   hireCost(roleId: string): number;
   /** Price of the next tenure rung, or null when the ladder is topped out. */
   tenureCost(roleId: string): number | null;
+  /** Points a reset would bank now. 0 when this pack has no reset layer. */
+  prestigeGain(): number;
+  /** Reset the company for a permanent multiplier. False if it would pay nothing. */
+  prestige(): boolean;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -103,12 +107,18 @@ export interface GameActions {
   grantTenure(roleId: string): void;
   hireCost(roleId: string): number;
   tenureCost(roleId: string): number | null;
+  /** Points a reset would bank now. 0 when this pack has no reset layer. */
+  prestigeGain(): number;
+  /** Start over for a permanent multiplier. */
+  prestige(): void;
   /** Hold / resume the shift clock. */
   toggleRunning(): void;
 }
 
 export interface GameSnapshot {
   content: ContentPack;
+  /** Points a reset would bank now; 0 when the pack has no reset layer. */
+  prestigeReady: number;
   state: GameState;
   telemetry: Telemetry;
   history: Sample[];
@@ -246,6 +256,7 @@ export function useGame(pack: ContentPack = DEFAULT_PACK) {
   const [running, setRunning] = useState(true);
   const [snapshot, setSnapshot] = useState<GameSnapshot>(() => ({
     content: engine.content,
+    prestigeReady: engine.prestigeGain(),
     state: cloneState(engine.getState()),
     telemetry: emptyTelemetry,
     history: [],
@@ -331,6 +342,7 @@ export function useGame(pack: ContentPack = DEFAULT_PACK) {
       const load = telemetry.escalationRate / Math.max(0.0001, engine.content.playerAnswerRate);
       setSnapshot({
         content: engine.content,
+        prestigeReady: engine.prestigeGain(),
         state: cloneState(state),
         telemetry,
         history: historyRef.current,
@@ -399,6 +411,14 @@ export function useGame(pack: ContentPack = DEFAULT_PACK) {
     () => ({
       work() {
         engine.work();
+        publish(telemetryRef.current);
+      },
+      prestigeGain: () => engine.prestigeGain(),
+      prestige() {
+        if (!engine.prestige()) return;
+        // A reset clears the floor, so the questions on screen refer to work
+        // that no longer exists.
+        questionsRef.current = [];
         publish(telemetryRef.current);
       },
       answer(id?: number) {

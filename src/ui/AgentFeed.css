@@ -218,3 +218,52 @@
     max-height: 420px;
   }
 }
+
+/* ------------------------------------------------------------- prestige -- */
+/* Absent until an agent designs a reset layer and a human approves it, so
+   this styling describes a panel that may never appear. */
+.prestige__body {
+  display: grid;
+  gap: var(--s3);
+  padding: var(--s4);
+}
+.prestige__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s3);
+  margin: 0;
+}
+.prestige__stats dt {
+  font-size: var(--fs-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.prestige__stats dd {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.prestige__button {
+  padding: var(--s3) var(--s4);
+  font: inherit;
+  font-size: var(--fs-small);
+  letter-spacing: 0.08em;
+  color: var(--accent-ink, var(--ink));
+  background: transparent;
+  border: 1px solid var(--accent, var(--rule));
+  border-radius: 2px;
+  cursor: pointer;
+}
+.prestige__button:disabled {
+  color: var(--ink-dim);
+  border-color: var(--rule-soft);
+  cursor: not-allowed;
+}
+.prestige__note {
+  margin: 0;
+  font-size: var(--fs-micro);
+  line-height: 1.5;
+  color: var(--ink-dim);
+}

@@ -4,6 +4,7 @@ import { AgentFeed } from './components/AgentFeed';
 import { AttentionMeter } from './components/AttentionMeter';
 import { Footer } from './components/Footer';
 import { OrgChart } from './components/OrgChart';
+import { PrestigePanel } from './components/PrestigePanel';
 import { QueuePanel } from './components/QueuePanel';
 import { StorePanel } from './components/StorePanel';
 import { ThroughputChart } from './components/ThroughputChart';
@@ -41,6 +42,12 @@ export function App() {
       <div className="deck">
         <div className="col col--left">
           <StorePanel content={game.content} state={game.state} actions={actions} />
+          <PrestigePanel
+            content={game.content}
+            state={game.state}
+            ready={game.prestigeReady}
+            actions={actions}
+          />
           <WorkButton
             clickRevenue={game.content.clickRevenue}
             showHint={game.telemetry.headcountTotal === 0}

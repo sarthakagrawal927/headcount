@@ -15,7 +15,7 @@
  */
 
 import type { ContentPack, GameState } from '../engine/types';
-import { createInitialState, step, unitCost } from '../engine/engine';
+import { createInitialState, prestigeGain, step, unitCost } from '../engine/engine';
 import type { EngineApi, PatchLogEntry } from '../engine/createEngine';
 
 const BASE = import.meta.env.VITE_GAME_URL ?? 'http://localhost:3001';
@@ -141,6 +141,15 @@ export function createRemoteEngine(seed: ContentPack): EngineApi {
       const role = pack.roles.find((r) => r.id === roleId);
       if (!role) return Infinity;
       return unitCost(role, state.headcount[roleId] ?? 0);
+    },
+
+    prestigeGain() {
+      return prestigeGain(pack, state);
+    },
+
+    prestige() {
+      // Authority is the server's; the next poll brings back the reset state.
+      return send({ type: 'prestige' });
     },
 
     tenureCost(roleId) {

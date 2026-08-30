@@ -192,6 +192,10 @@ export function createMockEngine(content: ContentPack, seed = 0x5eed): EngineApi
     tick,
     hireCost,
     tenureCost,
+    // The private in-browser game has no agent designing reset layers, so
+    // there is never one to use.
+    prestigeGain: () => 0,
+    prestige: () => false,
 
     work() {
       // The player, personally, doing a task. No question: they already know.

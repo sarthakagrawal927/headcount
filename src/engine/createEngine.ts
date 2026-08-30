@@ -9,8 +9,8 @@
  */
 
 import type { ContentPack, GameState, Telemetry } from './types.js';
-import { createInitialState, manualWork, step, unitCost } from './engine.js';
-import { buySop, grantTenure as grantTenureAction, hire as hireAction } from './actions.js';
+import { createInitialState, manualWork, prestigeGain, step, unitCost } from './engine.js';
+import { buySop, grantTenure as grantTenureAction, hire as hireAction, prestige as prestigeAction } from './actions.js';
 import { SEED_PACK } from './content.js';
 
 /**
@@ -51,6 +51,10 @@ export interface EngineApi {
   grantTenure(roleId: string): boolean;
   hireCost(roleId: string): number;
   tenureCost(roleId: string): number | null;
+  /** Points a reset would bank right now. 0 when the pack has no reset layer. */
+  prestigeGain(): number;
+  /** Reset the company for a permanent multiplier. False when it would pay nothing. */
+  prestige(): boolean;
 }
 
 export function createEngine(pack: ContentPack = SEED_PACK): EngineApi {
@@ -111,6 +115,17 @@ export function createEngine(pack: ContentPack = SEED_PACK): EngineApi {
       const role = pack.roles.find((r) => r.id === roleId);
       if (!role) return Infinity;
       return unitCost(role, state.headcount[roleId] ?? 0);
+    },
+
+    prestigeGain() {
+      return prestigeGain(pack, state);
+    },
+
+    prestige() {
+      const result = prestigeAction(state, pack);
+      if (!result.ok) return false;
+      state = result.state;
+      return true;
     },
 
     tenureCost(roleId) {

@@ -227,9 +227,17 @@ export function scoreRun(
   pack: ContentPack,
 ): RunScore {
   const peakThroughput = telemetry.reduce((m, s) => Math.max(m, s.throughput), 0);
-  const finalThroughput = telemetry.length
-    ? telemetry[telemetry.length - 1].throughput
-    : 0;
+
+  // "Final" is the best of the closing stretch, not the very last sample.
+  //
+  // A single sample is a bad summary of where a run ended once resets exist: a
+  // reset legitimately empties the floor, so a run that happened to reset near
+  // the end of the window read as a total collapse and every prestige design
+  // scored `stalled`. Taking the best of the last tenth asks the question that
+  // was always meant — did it recover — rather than "what was true at the
+  // final instant".
+  const tail = telemetry.slice(-Math.max(1, Math.floor(telemetry.length / 10)));
+  const finalThroughput = tail.reduce((m, s) => Math.max(m, s.throughput), 0);
 
   const wall = telemetry.find((s) => s.blockedFraction > 0.5);
   const attentionUtilisation =
