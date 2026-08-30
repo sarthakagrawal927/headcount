@@ -32,9 +32,7 @@ export function App() {
       <TopBar
         state={game.state}
         telemetry={game.telemetry}
-        content={game.content}
         pressure={game.pressure}
-        span={game.span}
         running={game.running}
         onToggleRunning={actions.toggleRunning}
       />

@@ -20,7 +20,7 @@ export function QueuePanel({
       <div className="panel__head">
         <span className="panel__title">
           <IconQuestion size={13} />
-          Escalation queue
+          Questions for you
         </span>
         <button
           className="btn btn--answer"
@@ -41,8 +41,8 @@ export function QueuePanel({
             <IconInbox size={30} />
             <h3>Nothing is waiting on you</h3>
             <p>
-              Workers raise a question whenever the job runs past what the spec actually says. Hire
-              someone and they will.
+              Workers ask a question whenever the job runs past what the spec says. Hire someone
+              and they will. Answering keeps the floor moving.
             </p>
           </div>
         </div>

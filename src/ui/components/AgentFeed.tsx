@@ -17,9 +17,6 @@ import { getPatchLog, subscribeToPatchLog } from '../remoteEngine';
 import { fmtClock } from '../format';
 import '../AgentFeed.css';
 
-/** The agent whose name goes on the changes. Matches src/agent/manifest.ts. */
-const DESIGNER = 'headcount-designer';
-
 /** How long an arriving entry stays visibly new. */
 const HIGHLIGHT_MS = 5200;
 
@@ -121,10 +118,9 @@ export function AgentFeed() {
       <div className="panel__head">
         <span className="panel__title">
           <IconTree size={13} />
-          Agent activity
+          AI designer
         </span>
         <span className="agentfeed__head-right">
-          <span className="agentfeed__who num">{DESIGNER}</span>
           {version !== null && <span className="chip chip--ok">PACK v{version}</span>}
         </span>
       </div>

@@ -93,17 +93,21 @@ export function StorePanel({
                 <div className="offer__stats">
                   {role.tier === 1 ? (
                     <>
-                      <span className="chip chip--ok">{fmtRate(role.throughput)} tasks/s</span>
-                      <span className="chip chip--attn">{fmtPct(role.confusion)} confusion</span>
-                      <span className="chip">{fmtCash(role.revenuePerTask)}/task</span>
+                      <span className="chip chip--ok">
+                        earns {fmtCash(role.revenuePerTask * role.throughput)}/s
+                      </span>
+                      <span className="chip chip--attn">
+                        asks on {fmtPct(role.confusion)} of tasks
+                      </span>
                     </>
                   ) : (
                     <>
-                      <span className="chip chip--ok">answers {fmtRate(role.answerRate)}/s</span>
-                      <span className="chip chip--attn">
-                        escalates {fmtPct(role.escalateFraction)}
+                      <span className="chip chip--ok">
+                        answers {fmtRate(role.answerRate)} q/s for you
                       </span>
-                      <span className="chip">tier {role.tier}</span>
+                      <span className="chip chip--attn">
+                        passes {fmtPct(role.escalateFraction)} up
+                      </span>
                     </>
                   )}
                 </div>
@@ -156,9 +160,8 @@ export function StorePanel({
                 <p className="offer__blurb">{sop.blurb}</p>
                 <div className="offer__stats">
                   <span className="chip chip--ok">
-                    confusion ×{sop.confusionMultiplier.toFixed(2)}
+                    {fmtPct(1 - sop.confusionMultiplier)} fewer questions
                   </span>
-                  <span className="chip">−{fmtPct(1 - sop.confusionMultiplier)} questions</span>
                 </div>
                 {!installed && (
                   <>

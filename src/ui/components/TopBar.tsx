@@ -1,30 +1,26 @@
-import type { ContentPack, GameState, Telemetry } from '../../engine/types';
+import type { GameState, Telemetry } from '../../engine/types';
 import type { Pressure } from '../useGame';
 import { fmtCash, fmtInt, fmtRate } from '../format';
 import { IconMark, IconPause, IconPlay } from '../icons';
 import { Ticker } from './Ticker';
 
 const STATUS: Record<Pressure, string> = {
-  nominal: 'FLOOR NOMINAL',
-  strained: 'ATTENTION STRAINED',
-  saturated: 'ATTENTION SATURATED',
-  critical: 'FLOOR BLOCKED',
+  nominal: 'RUNNING SMOOTHLY',
+  strained: 'BARELY KEEPING UP',
+  saturated: 'YOU ARE THE BOTTLENECK',
+  critical: 'FLOOR BLOCKED ON YOU',
 };
 
 export function TopBar({
   state,
   telemetry,
-  content,
   pressure,
-  span,
   running,
   onToggleRunning,
 }: {
   state: GameState;
   telemetry: Telemetry;
-  content: ContentPack;
   pressure: Pressure;
-  span: { reports: number; capacity: number; load: number } | null;
   running: boolean;
   onToggleRunning: () => void;
 }) {
@@ -49,14 +45,7 @@ export function TopBar({
           <Ticker className="readout__value" value={state.cash} format={fmtCash} flash="down" />
         </div>
         <div className="readout">
-          <span className="readout__label">Throughput</span>
-          <span className="readout__value">
-            <Ticker value={telemetry.throughput} format={fmtRate} flash="none" />
-            <span style={{ color: 'var(--ink-faint)', fontSize: 'var(--fs-xs)' }}> t/s</span>
-          </span>
-        </div>
-        <div className="readout">
-          <span className="readout__label">Headcount</span>
+          <span className="readout__label">Team</span>
           <Ticker
             className="readout__value"
             value={telemetry.headcountTotal}
@@ -64,41 +53,12 @@ export function TopBar({
           />
         </div>
         <div className="readout">
-          <span className="readout__label">Tasks done</span>
-          <Ticker
-            className="readout__value"
-            value={state.tasksCompleted}
-            format={fmtInt}
-            flash="none"
-          />
-        </div>
-        <div className="readout readout--defect">
-          <span className="readout__label">Defects</span>
+          <span className="readout__label">Output</span>
           <span className="readout__value">
-            <Ticker value={state.defects} format={fmtInt} flash="none" />
-            <span style={{ color: 'var(--ink-faint)', fontSize: 'var(--fs-xs)' }}>
-              {' '}
-              / {fmtInt(content.incidentThreshold)}
-            </span>
+            <Ticker value={telemetry.throughput} format={fmtRate} flash="none" />
+            <span style={{ color: 'var(--ink-faint)', fontSize: 'var(--fs-xs)' }}> tasks/s</span>
           </span>
         </div>
-        {span && (
-          <div className="readout" title="Direct reports against what your supervisory layer can hold">
-            <span className="readout__label">Span of control</span>
-            <span className="readout__value">
-              <span
-                className="num"
-                style={{ color: span.load > 1 ? 'var(--alarm-hot)' : 'var(--ink)' }}
-              >
-                {fmtInt(span.reports)}
-              </span>
-              <span style={{ color: 'var(--ink-faint)', fontSize: 'var(--fs-xs)' }}>
-                {' '}
-                / {fmtInt(span.capacity)}
-              </span>
-            </span>
-          </div>
-        )}
       </div>
 
       <button className="hold" data-held={!running} onClick={onToggleRunning}>

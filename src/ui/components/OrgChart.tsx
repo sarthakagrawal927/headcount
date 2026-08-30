@@ -98,7 +98,7 @@ function RoleNode({
               absorbs {fmtRate(count * role.answerRate)}/s
             </span>
             <span className="chip chip--attn" title="Share of absorbed questions kicked upward">
-              escalates {fmtPct(role.escalateFraction)}
+              passes {fmtPct(role.escalateFraction)} up
             </span>
           </>
         )}
@@ -168,7 +168,7 @@ export function OrgChart({
         </div>
 
         <Flow
-          label="reaching you ·"
+          label="questions reaching you ·"
           rate={reaching}
           alarm={reaching > content.playerAnswerRate}
         />
@@ -179,7 +179,7 @@ export function OrgChart({
           return (
             <div className="orgtier-block" key={tier}>
             {tier === 1 && idx > 0 && (
-              <Flow label="raised by the floor ·" rate={raised} />
+              <Flow label="asked by the floor ·" rate={raised} />
             )}
             <div className="orgtier">
               <span className="orgtier__spine" />

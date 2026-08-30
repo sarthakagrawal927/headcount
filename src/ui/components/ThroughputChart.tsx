@@ -66,14 +66,14 @@ export function ThroughputChart({
           </span>
           <span className="legend__item">
             <span className="legend__swatch" style={{ background: 'var(--attn)' }} />
-            Escalations {latest ? fmtRate(latest.escalationRate) : '0.00'}/s
+            Questions {latest ? fmtRate(latest.escalationRate) : '0.00'}/s
           </span>
           <span className="legend__item">
             <span
               className="legend__swatch"
               style={{ background: 'var(--ink-faint)', height: 0, borderTop: '2px dashed var(--ink-faint)' }}
             />
-            Your ceiling {fmtRate(answerRate)}/s
+            Your limit {fmtRate(answerRate)}/s
           </span>
         </div>
       </div>

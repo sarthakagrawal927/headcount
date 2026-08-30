@@ -537,49 +537,6 @@ svg {
   white-space: nowrap;
 }
 
-/* Queue depth as a segmented lamp strip. */
-.queuestrip {
-  display: flex;
-  align-items: center;
-  gap: var(--s4);
-}
-.queuestrip__cells {
-  display: flex;
-  gap: 3px;
-  flex: 1;
-  min-width: 0;
-}
-.cell {
-  flex: 1;
-  height: 16px;
-  border-radius: 1px;
-  background: var(--bg-inset);
-  box-shadow: inset 0 0 0 1px var(--rule-soft);
-  transition: background var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
-}
-.cell[data-lit='1'] {
-  background: color-mix(in oklch, var(--attn) 74%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--attn) 90%, transparent);
-}
-.cell[data-lit='2'] {
-  background: var(--alarm);
-  box-shadow: inset 0 0 0 1px var(--alarm-hot), 0 0 8px color-mix(in oklch, var(--alarm) 45%, transparent);
-}
-[data-pressure='critical'] .cell[data-lit='2'] {
-  animation: lamp 420ms steps(1, end) infinite;
-}
-.queuestrip__count {
-  display: flex;
-  align-items: baseline;
-  gap: var(--s2);
-  flex: none;
-}
-.queuestrip__count .num {
-  font-size: var(--fs-xl);
-  font-weight: 500;
-  color: var(--pressure);
-}
-
 /* Blocked-workforce bar */
 .blocked {
   display: flex;
