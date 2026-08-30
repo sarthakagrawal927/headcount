@@ -27,7 +27,13 @@ const css = `
   h1 { font-size: 64px; line-height: 1.15; font-weight: 650; letter-spacing: -0.01em; }
   h1 em { color: #35c2b4; font-style: normal; }
   p.sub { margin-top: 28px; font-size: 30px; line-height: 1.45; color: #93a3ab; }
-  .cap { font-size: 46px; line-height: 1.35; font-weight: 600; }
+  .cap { font-size: 54px; line-height: 1.3; font-weight: 650; letter-spacing: -0.015em;
+    text-wrap: balance; }
+  .cap .l { display: block; }
+  .cap .l + .l { margin-top: 10px; }
+  .byline { margin-top: 46px; font-family: "IBM Plex Mono", monospace; font-size: 17px;
+    letter-spacing: 0.1em; color: #43525a; text-transform: uppercase; }
+  .accentbar { width: 76px; height: 3px; background: #35c2b4; margin-bottom: 40px; }
   .cap em { color: #35c2b4; font-style: normal; }
   .cap strong { color: #e5534b; font-weight: 600; }
   .term { background: #07090b; border: 1px solid #1d262b; border-radius: 6px; padding: 36px 42px;
@@ -48,7 +54,9 @@ if (spec.kind === 'title') {
   inner = `<div class="brand"><b>HEADCOUNT</b><span>OPERATIONS CONSOLE</span></div>
     <h1>${spec.title}</h1><p class="sub">${spec.sub ?? ''}</p>`;
 } else if (spec.kind === 'caption') {
-  inner = `<div class="cap">${spec.lines.join('<br/>')}</div>`;
+  const lines = spec.lines.map((l) => `<span class="l">${l}</span>`).join('');
+  inner = `<div class="accentbar"></div><div class="cap">${lines}</div>` +
+    (spec.byline ? `<div class="byline">${esc(spec.byline)}</div>` : '');
 } else if (spec.kind === 'terminal') {
   inner = `<div class="label">${esc(spec.label ?? '')}</div><div class="term">${spec.body}</div>`;
 } else if (spec.kind === 'close') {

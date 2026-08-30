@@ -1,0 +1,38 @@
+{
+  "agent": "headcount-narrator",
+  "model": "freeai/gh-gpt-4.1",
+  "session": "01m18v7w8m01zv3c33wczfnj5y",
+  "cards": [
+    {
+      "lines": [
+        "The player answers 1.00 questions/second. Everything else grows."
+      ]
+    },
+    {
+      "lines": [
+        "Hiring peaks throughput at 4.56 tasks/s. Then it falls to 1.67."
+      ]
+    },
+    {
+      "lines": [
+        "The agent designs. The agent proves. A human must approve."
+      ]
+    },
+    {
+      "lines": [
+        "Evidence is bound. No token. No signature. No patch."
+      ]
+    },
+    {
+      "lines": [
+        "Autonomy is earned. It is revoked. Simulation was not enough."
+      ]
+    },
+    {
+      "lines": [
+        "The floor decides. The floor decides what stays."
+      ]
+    }
+  ],
+  "note": "Written by the headcount-narrator agent running on the same TrueForge instance as the designer, from a fixed evidence brief, with every figure checked against that brief before the copy was accepted. Two takes were generated; a human chose this one. The second was vaguer and contained a factual error ('hiring raises floor, lowers ceiling'), which is the same reason every other agent output here gets read before it ships."
+}
