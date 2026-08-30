@@ -220,9 +220,10 @@ approve everything forever ends up approving everything without reading it.
 confusion from 0.3 to 0.9 — framed as tightening tolerances. The simulator
 passed it: *"the run grows, meets the attention wall, and stays playable past
 it."* Evidence binding passed it. It had earned clearance, so **it applied with
-no human involved at all.** Throughput on the real floor then fell from 4.59 to
-1.56 tasks/s, the supervisor judged it a regression, and clearance was revoked
-automatically.
+no human involved at all.** Throughput on the real floor then fell from 3.33 to
+1.11 tasks/s — exactly a third — the supervisor judged it a regression, and
+clearance was revoked automatically. The run is in
+[docs/ledger-sample.jsonl](docs/ledger-sample.jsonl).
 
 Simulation was not sufficient. A design can clear every pre-flight check and
 still be wrong in production, and the only thing that catches that is watching

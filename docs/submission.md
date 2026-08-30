@@ -87,7 +87,7 @@ agent actually did. The sharpest: it once **fabricated an evidence token**,
 attached it to a well-argued rationale, a human approved it — and the server
 refused it anyway, because a token nobody minted has no signature. Separately, a
 change passed simulation, passed evidence binding, and applied with no human
-involved because clearance had been earned; throughput fell from 4.59 to 1.56
+involved because clearance had been earned; throughput fell from 3.33 to 1.11
 tasks/sec and clearance was revoked automatically. Simulation was not sufficient.
 
 `docs/harness-findings.md` documents five places TrueForge's docs and shipped

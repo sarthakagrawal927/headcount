@@ -158,7 +158,7 @@ Then the last line.
 > "And then it shipped this: riveter confusion from 0.3 to 0.9, described as
 > tightening tolerances. The simulator passed it. Evidence binding passed it.
 > It had clearance, so no human saw it at all. Throughput on the real floor
-> went from 4.59 to 1.56 — and its autonomy was taken back automatically."
+> went from 3.33 to 1.11 — and its autonomy was taken back automatically."
 
 Let that sit.
 
